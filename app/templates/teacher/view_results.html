@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Results - {{ assessment.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+  <div class="card">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-semibold">Results — {{ assessment.title }}</h2>
+        <div class="text-sm text-slate-400">Subject: {{ assessment.subject.name }}</div>
+      </div>
+    </div>
+
+    <div class="mt-4 grid md:grid-cols-2 gap-4">
+      <div>
+        <h4 class="font-semibold">Student Results</h4>
+        <ul class="mt-2 space-y-2">
+          {% for att in attempts %}
+            <li class="p-3 bg-gray-50 rounded flex justify-between items-center">
+              <div>
+                <div class="font-medium">{{ att.student.full_name or att.student.username }}</div>
+                <div class="text-xs text-slate-400">Score: {{ att.score }}% • Watched: {{ 'Yes' if att.watched_video_for_weak_topic else 'No' }}</div>
+              </div>
+              <div class="text-right">
+                <!-- <a href="{{ url_for('student_dashboard') }}" class="text-indigo-600 hover:underline text-sm">Open student</a> -->
+              </div>
+            </li>
+          {% else %}
+            <div class="text-sm text-slate-400">No attempts yet.</div>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-semibold">Topic performance</h4>
+        <div class="h-64">
+          <canvas id="topicChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+  const topicLabels = {{ topic_percent.keys()|list|tojson }};
+  const topicValues = {{ topic_percent.values()|list|tojson }};
+
+  const ctx = document.getElementById('topicChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: topicLabels,
+      datasets: [{ label: 'Avg Correct %', data: topicValues }]
+    },
+    options: { scales: { y: { beginAtZero: true, max:100 } } }
+  });
+</script>
+{% endblock %}

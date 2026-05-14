@@ -1,0 +1,84 @@
+/* main.css — theme: Hybrid Gamified + Professional */
+/* Use Tailwind utility classes in templates; put component overrides and animations here. */
+
+/* Font family helper (Inter loaded in base) */
+.font-inter { font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+/* Card glass effect */
+.card {
+  @apply bg-white/80 backdrop-blur-md rounded-2xl shadow-md border border-slate-100;
+}
+
+/* Progress gradient */
+.progress-gradient {
+  background: linear-gradient(90deg, #7c3aed 0%, #06b6d4 100%);
+  height: 100%;
+  transition: width 900ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* Buttons */
+.btn {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold shadow-sm;
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(2,6,23,0.08); }
+.btn:active { transform: translateY(0); }
+
+/* Badge */
+.badge {
+  display:inline-flex;
+  align-items:center;
+  gap:.5rem;
+  padding:.35rem .6rem;
+  border-radius:999px;
+  background: linear-gradient(180deg,#fff 0%, rgba(255,255,255,0.6) 100%);
+  box-shadow: 0 6px 18px rgba(12,15,30,0.06);
+  border: 1px solid rgba(255,255,255,0.6);
+}
+
+/* small entrance animation */
+@keyframes floatIn {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.float-in { animation: floatIn .6s cubic-bezier(.2,.9,.2,1) both; }
+
+/* Badge pulse/glow for new badges */
+@keyframes badgeGlow {
+  0% { box-shadow: 0 0 0 0 rgba(124,58,237,0.0); }
+  50% { box-shadow: 0 0 18px 6px rgba(124,58,237,0.12); }
+  100% { box-shadow: 0 0 0 0 rgba(124,58,237,0); }
+}
+.badge-new { animation: badgeGlow 2s infinite; }
+
+/* Leaderboard highlight colors */
+.lb-gold { background: linear-gradient(90deg,#FFD54A,#FFB74D); color: #2b2b2b; }
+.lb-silver { background: linear-gradient(90deg,#E0E0E0,#BDBDBD); color: #0b0b0b; }
+.lb-bronze { background: linear-gradient(90deg,#FFCC80,#FFAB91); color:#111; }
+
+/* subtle card hover lift */
+.card:hover { transform: translateY(-6px); transition: transform .25s cubic-bezier(.2,.9,.2,1); }
+
+/* animated confetti placeholder class (used by JS) */
+.confetti-active { pointer-events:none; }
+
+/* small responsive tweaks */
+@media (max-width: 1024px) {
+  .card { border-radius: 14px; }
+}
+
+/* utility to visually emphasize topic chips */
+.topic-chip {
+  @apply inline-block text-xs px-2 py-1 rounded-full border;
+  border-color: rgba(99,102,241,0.12);
+  background: linear-gradient(90deg, rgba(99,102,241,0.06), rgba(6,182,212,0.03));
+  color: #374151;
+}
+
+/* nice radio style enhancement */
+input[type="radio"] {
+  accent-color: #7c3aed;
+}
+
+/* safety: ensure animations don't disrupt function */
+* { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }

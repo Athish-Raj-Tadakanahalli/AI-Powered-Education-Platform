@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Create Assessment{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <div class="card" data-aos="fade-up">
+    <h2 class="text-xl font-semibold mb-2">Create Assessment</h2>
+    <form id="assessmentForm" method="post">
+      <div class="mb-3">
+        <label class="text-sm">Title</label>
+        <input name="title" required class="w-full p-2 border rounded" />
+      </div>
+
+      <div class="mb-3">
+        <label class="text-sm">Subject</label>
+        <select name="subject_id" class="w-full p-2 border rounded" required>
+          <option value="">-- select subject --</option>
+          {% for s in subjects %}
+            <option value="{{ s.id }}">{{ s.name }} • {{ s.class_year or 'N/A' }} • {{ s.semester or 'N/A' }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <h3 class="font-semibold mt-4">Questions</h3>
+      <div id="questionsContainer" class="space-y-4 mt-3"></div>
+
+      <div class="mt-3 flex space-x-2">
+        <button type="button" onclick="addQuestion()" class="px-4 py-2 bg-green-600 text-white rounded">Add Question</button>
+        <button type="button" onclick="clearQuestions()" class="px-4 py-2 border rounded">Clear</button>
+      </div>
+
+      <input type="hidden" name="questions_json" id="questions_json">
+      <div class="mt-4">
+        <button type="button" class="px-5 py-2 bg-indigo-600 text-white rounded" onclick="submitAssessment()">Create Assessment</button>
+        <a href="{{ url_for('teacher_dashboard') }}" class="ml-3 text-sm text-slate-500">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+  let qcount = 0;
+
+  function addQuestion(prefill){
+    qcount++;
+    const id = 'q'+qcount;
+    const container = document.getElementById('questionsContainer');
+    const div = document.createElement('div');
+    div.className = 'p-3 bg-gray-50 rounded';
+    div.id = id;
+
+    const text = (prefill && prefill.text) || '';
+    const options = (prefill && prefill.options) || ['', '', '', ''];
+    const correct = (prefill && prefill.correct_index) || 0;
+    const topic = (prefill && prefill.topic) || '';
+
+    // Build inner HTML safely (no Jinja inside template strings)
+    div.innerHTML = ''
+      + `<div class="flex justify-between items-start">`
+      + `  <div class="font-semibold">Question ${qcount}</div>`
+      + `  <div><button type="button" onclick="removeQuestion('${id}')" class="text-sm text-red-600">Remove</button></div>`
+      + `</div>`
+      + `<div class="mt-2"><textarea placeholder="Question text" class="w-full p-2 border rounded qtext">${escapeHtml(text)}</textarea></div>`
+      + `<div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">`
+      + `  <div><input class="w-full p-2 border rounded qopt" placeholder="Option 1" value="${escapeHtml(options[0]||'')}"></div>`
+      + `  <div><input class="w-full p-2 border rounded qopt" placeholder="Option 2" value="${escapeHtml(options[1]||'')}"></div>`
+      + `  <div><input class="w-full p-2 border rounded qopt" placeholder="Option 3" value="${escapeHtml(options[2]||'')}"></div>`
+      + `  <div><input class="w-full p-2 border rounded qopt" placeholder="Option 4" value="${escapeHtml(options[3]||'')}"></div>`
+      + `</div>`
+      + `<div class="mt-2 flex items-center space-x-3">`
+      + `  <label class="text-sm">Correct option</label>`
+      + `  <select class="p-2 border rounded qcorrect">`
+      + `    <option value="0" ${correct==0 ? 'selected' : ''}>Option 1</option>`
+      + `    <option value="1" ${correct==1 ? 'selected' : ''}>Option 2</option>`
+      + `    <option value="2" ${correct==2 ? 'selected' : ''}>Option 3</option>`
+      + `    <option value="3" ${correct==3 ? 'selected' : ''}>Option 4</option>`
+      + `  </select>`
+      + `  <label class="ml-4 text-sm">Topic</label>`
+      + `  <input class="p-2 border rounded qtopic" placeholder="e.g. Recursion" value="${escapeHtml(topic)}">`
+      + `</div>`;
+
+    container.appendChild(div);
+    window.scrollTo(0, document.body.scrollHeight);
+  }
+
+  function removeQuestion(id){
+    const el = document.getElementById(id);
+    if(el) el.remove();
+  }
+
+  function clearQuestions(){
+    document.getElementById('questionsContainer').innerHTML = '';
+    qcount = 0;
+  }
+
+  function gatherQuestions(){
+    const items = [];
+    const container = document.getElementById('questionsContainer');
+    const questionDivs = container.children;
+    for(let d of questionDivs){
+      const text = d.querySelector('.qtext').value.trim();
+      const opts = Array.from(d.querySelectorAll('.qopt')).map(i=>i.value.trim());
+      const correct = d.querySelector('.qcorrect').value;
+      const topic = d.querySelector('.qtopic').value.trim() || 'General';
+      if(!text) continue;
+      items.push({text, options: opts, correct_index: parseInt(correct), topic});
+    }
+    return items;
+  }
+
+  function submitAssessment(){
+    const questions = gatherQuestions();
+    if(questions.length === 0){
+      if(!confirm("No questions added. Create empty assessment?")) return;
+    }
+    document.getElementById('questions_json').value = JSON.stringify(questions);
+    document.getElementById('assessmentForm').submit();
+  }
+
+  // helper to avoid accidental HTML injection into inputs (keeps values safe in template strings)
+  function escapeHtml(unsafe){
+    if(!unsafe) return '';
+    return unsafe
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  // Optional: add one starter question
+  document.addEventListener('DOMContentLoaded', ()=> addQuestion());
+</script>
+{% endblock %}

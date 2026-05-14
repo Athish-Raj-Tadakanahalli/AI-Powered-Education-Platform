@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Students{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+  <div class="card" data-aos="fade-up">
+    <h2 class="text-xl font-semibold">Students</h2>
+
+    <form method="get" class="mt-3 flex flex-wrap gap-3 items-end">
+      <div>
+        <label class="text-sm">Class</label>
+        <select name="class_year" class="p-2 border rounded">
+          <option value="">All</option>
+          {% for c in distinct_classes %}
+            <option value="{{ c }}" {% if selected_class==c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="text-sm">Semester</label>
+        <select name="semester" class="p-2 border rounded">
+          <option value="">All</option>
+          {% for s in distinct_sem %}
+            <option value="{{ s }}" {% if selected_sem==s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="text-sm">Subject</label>
+        <select name="subject_id" class="p-2 border rounded">
+          <option value="">All</option>
+          {% for sub in subjects %}
+            <option value="{{ sub.id }}" {% if selected_subject and selected_subject==sub.id %}selected{% endif %}>{{ sub.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <button class="px-4 py-2 bg-indigo-600 text-white rounded">Filter</button>
+        <a href="{{ url_for('admin_view_students') }}" class="ml-2 text-sm text-slate-500">Reset</a>
+      </div>
+    </form>
+
+    <div class="mt-4 space-y-2">
+      {% for s in students %}
+        <div class="p-3 rounded-lg bg-gray-50 flex justify-between items-center">
+          <div>
+            <div class="font-semibold">{{ s.full_name or s.username }}</div>
+            <div class="text-xs text-slate-400">{{ s.username }} • {{ s.class_year or 'N/A' }} • {{ s.semester or 'N/A' }}</div>
+          </div>
+          <div class="text-sm text-slate-500">
+            <a href="{{ url_for('student_dashboard') }}" class="text-indigo-600 hover:underline">Open student portal</a>
+          </div>
+        </div>
+      {% else %}
+        <div class="text-sm text-slate-400">No students found for these filters.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

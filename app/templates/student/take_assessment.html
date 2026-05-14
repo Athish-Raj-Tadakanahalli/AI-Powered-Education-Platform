@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Take Assessment{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+  <div class="card" data-aos="fade-up">
+    <h2 class="text-xl font-semibold">Take: {{ assessment.title }}</h2>
+
+    <form id="answersForm" method="post">
+      <input type="hidden" id="answers_json" name="answers_json">
+      <div class="space-y-4">
+        {% for q in questions %}
+          <div class="p-3 bg-gray-50 rounded qcard" data-qid="{{ q.id }}">
+            <div class="font-medium">Q{{ loop.index }}: {{ q.text }}</div>
+            <div class="text-xs text-slate-400">Topic: {{ q.topic or 'General' }}</div>
+
+            <div class="mt-2 space-y-1">
+              {% for opt in q.options %}
+                <label class="flex items-center space-x-2">
+                  <input type="radio" name="q{{ q.id }}" value="{{ loop.index0 }}">
+                  <span>{{ opt }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="mt-4 flex items-center space-x-3">
+        <button id="submitBtn" type="button" onclick="submitAnswers()" class="px-4 py-2 bg-indigo-600 text-white rounded" disabled>Submit Answers</button>
+        <a href="{{ url_for('student_dashboard') }}" class="text-sm text-slate-500">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Consent modal -->
+<div id="consentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+  <div class="bg-white max-w-2xl w-full rounded-lg p-6 shadow-lg mx-4">
+    <h3 class="text-lg font-semibold mb-2">Camera consent required</h3>
+    <p class="text-sm text-slate-600 mb-4">
+      This assessment requires access to your webcam for a short integrity check (face present and attention heuristics).
+      No video frames are stored by default — only timestamped event logs (e.g. "no_face_detected", "face_off_center") are sent
+      to your instructor. If you do not consent, contact your teacher for an alternative arrangement.
+    </p>
+    <div class="flex items-center space-x-3">
+      <button id="consentAccept" class="px-4 py-2 bg-emerald-600 text-white rounded">I Consent & Start</button>
+      <button id="consentDecline" class="px-4 py-2 border rounded">I Do Not Consent</button>
+    </div>
+    <p class="mt-3 text-xs text-slate-400">You may be asked to enable camera permission by your browser.</p>
+  </div>
+</div>
+
+<!-- Proctor overlay UI -->
+<div id="proctorOverlay" aria-live="polite" role="status" style="display:none;">
+  <div style="position: fixed; right: 20px; bottom: 20px; width: 320px; z-index: 99999; font-family: sans-serif; box-shadow: 0 6px 20px rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; background: rgba(255,255,255,0.95);">
+    <div style="padding:8px 10px; font-weight:600; background:#111827;color:#fff;">Proctoring</div>
+    <div style="padding:10px; font-size:13px; color:#111827;">
+      <div>Webcam: <span id="proctorStatus" style="color:#047857;font-weight:700">Initializing…</span></div>
+      <div>Checks: <span id="proctorChecks">0</span></div>
+      <div>Violations: <span id="proctorViolations">0</span></div>
+      <div style="font-size:11px;margin-top:6px;color:#6b7280">
+        Please remain facing the screen. This session will be monitored for exam integrity.
+      </div>
+      <video id="proctorVideo" autoplay muted playsinline style="display:none;width:160px;height:120px;border-radius:6px;margin-top:8px"></video>
+    </div>
+  </div>
+</div>
+
+<div id="proctorAlertBanner" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:200000;background:rgba(220,38,38,0.95);color:white;padding:10px 16px;border-radius:8px;font-weight:700;">ALERT: Please look at your screen — no malpractice allowed.</div>
+
+<!-- small beep (place a small beep file at static/sounds/alert_beep.mp3) -->
+<audio id="proctorBeep" src="{{ url_for('static', filename='sounds/alert_beep.mp3') }}" preload="auto"></audio>
+{% endblock %}
+
+{% block body_extra %}
+<!-- face-api.js (tiny detector) -->
+<script defer src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+<script>
+(function(){
+  // -- helper for safe logging
+  function log() { try { console.log.apply(console, ['[PROCTOR]'].concat(Array.from(arguments))); } catch(e){} }
+
+  // DOM refs
+  const consentModal = document.getElementById('consentModal');
+  const acceptBtn = document.getElementById('consentAccept');
+  const declineBtn = document.getElementById('consentDecline');
+  const submitBtn = document.getElementById('submitBtn');
+
+  const proctorOverlay = document.getElementById('proctorOverlay');
+  const proctorVideo = document.getElementById('proctorVideo');
+  const proctorStatus = document.getElementById('proctorStatus');
+  const proctorChecks = document.getElementById('proctorChecks');
+  const proctorViolations = document.getElementById('proctorViolations');
+  const proctorBanner = document.getElementById('proctorAlertBanner');
+  const beep = document.getElementById('proctorBeep');
+
+  // config
+  const CHECK_INTERVAL_MS = 900;
+  const CENTER_THRESHOLD_RATIO = 0.28;
+  const ALERT_COOLDOWN_MS = 6000;
+
+  // state
+  let checks = 0, violations = 0, lastAlertAt = 0, intervalId = null;
+  let stopProctoringFunc = null;
+
+  // expose stopProctoring so other scripts can call before submit
+  window.stopProctoring = function(){
+    try {
+      if(intervalId) clearInterval(intervalId);
+      if(proctorVideo && proctorVideo.srcObject){
+        proctorVideo.srcObject.getTracks().forEach(t=>t.stop());
+      }
+      proctorOverlay.style.display = 'none';
+    } catch(e){ log('stopProctoring error', e); }
+  };
+
+  // send violation AJAX to server
+  async function sendViolation(reason, details){
+    const now = Date.now();
+    if(now - lastAlertAt < ALERT_COOLDOWN_MS) return;
+    lastAlertAt = now;
+    try {
+      await fetch("{{ url_for('student_cheating_alert') }}", {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          assessment_id: {{ assessment.id }},
+          reason, details, ts: new Date().toISOString()
+        })
+      });
+      log('violation sent', reason);
+    } catch(e){ log('violation send failed', e); }
+  }
+
+  function showBanner(){
+    proctorBanner.style.display = 'block';
+    try { beep.play().catch(()=>{}); } catch(e){}
+    setTimeout(()=> proctorBanner.style.display = 'none', 3000);
+  }
+
+  // start proctoring after consent
+  async function startProctoring(){
+    consentModal.style.display = 'none';
+    proctorOverlay.style.display = 'block';
+    submitBtn.disabled = false; // allow submit once proctoring running
+
+    // load face-api models
+    try {
+      const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    } catch(e){
+      log('model load failed', e);
+      proctorStatus.textContent = 'Model load failed';
+      proctorStatus.style.color = '#b91c1c';
+      return;
+    }
+
+    // get webcam
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+      proctorVideo.srcObject = stream;
+      proctorVideo.play();
+      proctorStatus.textContent = 'Camera ON';
+      proctorStatus.style.color = '#047857';
+    } catch(e){
+      log('getUserMedia failed', e);
+      proctorStatus.textContent = 'Camera blocked';
+      proctorStatus.style.color = '#b91c1c';
+      return;
+    }
+
+    const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 });
+
+    // detection loop
+    intervalId = setInterval(async function(){
+      try {
+        if(proctorVideo.readyState < 2) return;
+        checks++;
+        proctorChecks.textContent = checks;
+        const res = await faceapi.detectSingleFace(proctorVideo, opts);
+        if(!res){
+          violations++;
+          proctorViolations.textContent = violations;
+          showBanner();
+          sendViolation('no_face_detected', { checks, violations });
+          return;
+        }
+        const box = res.box;
+        const vw = proctorVideo.videoWidth;
+        const vh = proctorVideo.videoHeight;
+        const faceCenterX = box.x + box.width/2;
+        const faceCenterY = box.y + box.height/2;
+        const dx = Math.abs(faceCenterX - vw/2) / vw;
+        const dy = Math.abs(faceCenterY - vh/2) / vh;
+        const maxDelta = Math.max(dx, dy);
+        if(maxDelta > CENTER_THRESHOLD_RATIO){
+          violations++;
+          proctorViolations.textContent = violations;
+          showBanner();
+          sendViolation('face_off_center', { dx, dy, box });
+        }
+      } catch(e){
+        log('detection error', e);
+      }
+    }, CHECK_INTERVAL_MS);
+  }
+
+  // consent button handlers
+  acceptBtn.addEventListener('click', function(){
+    startProctoring();
+  });
+  declineBtn.addEventListener('click', function(){
+    // if student declines, redirect them away from assessment
+    alert('You declined camera consent. Please contact your teacher for alternative arrangements.');
+    window.location.href = "{{ url_for('student_dashboard') }}";
+  });
+
+  // Submit answers - gather answers, stop proctoring and submit form
+  window.submitAnswers = function(){
+    // collect answers
+    const cards = document.querySelectorAll('.qcard');
+    const map = {};
+    cards.forEach(c=>{
+      const qid = c.dataset.qid;
+      const checked = c.querySelector('input[type=radio]:checked');
+      map[qid] = checked ? parseInt(checked.value) : null;
+    });
+    document.getElementById('answers_json').value = JSON.stringify(map);
+
+    // stop proctoring cleanly
+    try { window.stopProctoring(); } catch(e){ log('stopProctoring call error', e); }
+
+    // disable submit to prevent duplicates
+    submitBtn.disabled = true;
+    document.getElementById('answersForm').submit();
+  };
+
+  // warn before leaving page (optional)
+  window.addEventListener('beforeunload', function(e){
+    // if proctoring active, warn
+    if(proctorOverlay.style.display === 'block'){
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+})();
+</script>
+{% endblock %}

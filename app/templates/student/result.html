@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Result{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+  <div class="card" data-aos="fade-up">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-2xl font-bold">Assessment Result</h2>
+        <p class="text-slate-500">Score: <span class="font-semibold text-indigo-600">{{ score }}%</span></p>
+        <p class="text-sm text-slate-400">Attempted on: {{ attempt.created_at }}</p>
+      </div>
+
+      <div class="text-right">
+        <div class="text-slate-500">XP earned</div>
+        <div class="text-2xl font-bold text-emerald-600">{{ xp_gain or 0 }}</div>
+      </div>
+    </div>
+
+    {% if new_badges and new_badges|length %}
+      <div class="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-emerald-50 rounded-lg flex items-center space-x-4">
+        <div class="text-indigo-700 font-semibold">New Badge(s):</div>
+        <div class="flex space-x-2">
+          {% for b in new_badges %}
+            <div class="px-3 py-1 rounded-full bg-white shadow-sm text-sm">{{ b }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if weak_topic %}
+  <div class="card" data-aos="fade-up">
+    <h3 class="font-semibold">Recommended remediation — weak topic: <span class="text-indigo-600">{{ weak_topic }}</span></h3>
+
+    {% if video_url %}
+      <p class="text-sm text-slate-500">Watch the recommended video fully to mark remediation complete.</p>
+
+      <div id="videoWrapper" class="mt-4">
+        <div id="player"></div>
+      </div>
+
+      <!-- Load YouTube IFrame API (must be present once) -->
+      <script src="https://www.youtube.com/iframe_api"></script>
+
+      <div class="mt-4 flex items-center space-x-3">
+        <button id="continueBtn" disabled class="px-4 py-2 rounded-lg bg-slate-300 text-slate-600 cursor-not-allowed">Continue</button>
+        <div id="watchStatus" class="text-sm text-slate-500">Video not completed yet</div>
+      </div>
+
+    {% else %}
+      <p class="text-sm text-slate-500">We couldn't find a remediation video at the moment. Your teacher will be notified.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="card" data-aos="fade-up">
+    <a href="{{ url_for('student_dashboard') }}" class="text-sm text-indigo-600 hover:underline">Return to dashboard</a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+  // Celebrate confetti if new badges
+  document.addEventListener('DOMContentLoaded', function(){
+    const newBadges = {{ new_badges|tojson or '[]' }};
+    if(newBadges && newBadges.length){
+      setTimeout(()=>{ celebrate(); }, 400);
+    }
+  });
+</script>
+
+{% if video_url %}
+<script>
+/*
+ Robust YouTube player loader
+ - Ensures iframe API is loaded only once
+ - Waits for API ready event, then creates player
+ - Avoids duplicate players and race conditions
+*/
+
+// Safe video URL from server
+const __videoUrl = {{ video_url|tojson }};
+function extractVideoId(u){
+  if(!u) return null;
+  const m = u.match(/[?&]v=([^&]+)/);
+  if(m) return m[1];
+  const m2 = u.match(/youtu\.be\/([^?&]+)/);
+  if(m2) return m2[1];
+  return null;
+}
+const __videoId = extractVideoId(__videoUrl);
+
+// debug helper
+function log(...args){ try { console.log('[YT-PLAYER]', ...args); } catch(e){} }
+
+if(!__videoId){
+  log('No videoId found, skipping player creation.');
+} else {
+  // Promise to ensure YT is ready
+  function ensureYouTubeIframeAPI(){
+    // if already available and ready
+    if(window.YT && window.YT.Player){
+      log('YT already ready');
+      return Promise.resolve(window.YT);
+    }
+
+    // if a promise already exists (another call in progress), return it
+    if(window.__ytApiReadyPromise){
+      log('Using existing YT promise');
+      return window.__ytApiReadyPromise;
+    }
+
+    // create a promise and store it globally so other calls reuse it
+    window.__ytApiReadyPromise = new Promise((resolve, reject) => {
+      // create global callback that YouTube API will call
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = function(){
+        log('onYouTubeIframeAPIReady fired');
+        if (typeof prev === 'function') {
+          try { prev(); } catch(e){ console.error(e); }
+        }
+        resolve(window.YT);
+      };
+
+      // inject script if not present
+      if(!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')){
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        tag.async = true;
+        tag.onerror = function(e){
+          console.error('YT iframe API failed to load', e);
+          reject(new Error('YT API load error'));
+        };
+        document.head.appendChild(tag);
+        log('YT iframe_api script injected');
+      } else {
+        log('YT iframe_api script already present, waiting for ready callback');
+        // If script present but onYouTubeIframeAPIReady won't be called (rare),
+        // attempt to poll for window.YT.Player as a fallback:
+        const poll = setInterval(() => {
+          if(window.YT && window.YT.Player){
+            clearInterval(poll);
+            resolve(window.YT);
+          }
+        }, 200);
+        // safety timeout
+        setTimeout(() => {
+          clearInterval(poll);
+          if(window.YT && window.YT.Player){
+            resolve(window.YT);
+          } else {
+            reject(new Error('YT API not ready after timeout'));
+          }
+        }, 8000);
+      }
+    });
+
+    return window.__ytApiReadyPromise;
+  }
+
+  // create the player once API ready
+  ensureYouTubeIframeAPI().then((YT) => {
+    // guard: don't create twice
+    if(window.__playerCreated){
+      log('Player already created; skipping creation.');
+      return;
+    }
+    window.__playerCreated = true;
+
+    log('Creating YT.Player for videoId:', __videoId);
+    window.__player = new YT.Player('player', {
+      height: '390',
+      width: '700',
+      videoId: __videoId,
+      playerVars: {
+        'controls': 1,
+        'modestbranding': 1,
+        'rel': 0,
+        'fs': 1
+      },
+      events: {
+        'onStateChange': function(event){
+          log('YT state changed:', event.data);
+          if(event.data === YT.PlayerState.ENDED){
+            log('Video ended — marking watched');
+            // ensure single mark
+            if(!window.__watched){
+              window.__watched = true;
+              fetch("{{ url_for('mark_video_watched', attempt_id=attempt.id) }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ watched: true })
+              }).then(r => r.json()).then(data => {
+                document.getElementById('watchStatus').innerText = "Video completed — remediation marked!";
+                const btn = document.getElementById('continueBtn');
+                btn.disabled = false;
+                btn.classList.remove('bg-slate-300','cursor-not-allowed');
+                btn.classList.add('bg-indigo-600','text-white');
+                try { celebrate(); } catch(e){ log('celebrate not defined'); }
+              }).catch(err => {
+                console.error("mark watched failed", err);
+                document.getElementById('watchStatus').innerText = "Completed locally — network error saving status.";
+              });
+            }
+          }
+        }
+      }
+    });
+  }).catch(err => {
+    console.error('YT API ready failed:', err);
+    document.getElementById('watchStatus').innerText = "Video player failed to load. Please disable extensions or try again.";
+  });
+
+  // continue button handler
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const btn = document.getElementById('continueBtn');
+    if(btn){
+      btn.addEventListener('click', ()=>{
+        if(!window.__watched){
+          alert("Please watch the full video to continue remediation.");
+          return;
+        }
+        window.location.href = "{{ url_for('student_dashboard') }}";
+      });
+    }
+  });
+}
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Welcome — AI Edu & Assess{% endblock %}
+
+{% block head_extra %}
+<style>
+/* --- Hide header & sidebar only on this page --- */
+header { display: none !important; }
+aside { display: none !important; }
+/* force main area full width */
+.max-w-7xl .grid > section { grid-column: 1 / -1; }
+
+/* --- Full-screen centered layout --- */
+.page-center {
+  min-height: calc(100vh - 48px); /* leave small footer space */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 1.25rem;
+  background: radial-gradient(1200px 400px at 10% 10%, rgba(99,102,241,0.06), transparent 8%),
+              linear-gradient(180deg, #fff 0%, #f6fbff 100%);
+}
+
+/* container that holds hero + login stacked vertically */
+.landing-wrap {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.25rem;
+  align-items: center;
+}
+
+/* hero block: soft glass card with gradient and subtle illustration */
+.hero {
+  border-radius: 20px;
+  padding: 2.25rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.70));
+  box-shadow: 0 30px 80px rgba(8,15,40,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+  border: 1px solid rgba(12,20,60,0.04);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+}
+
+/* nicely sized title */
+.hero h1 {
+  font-size: 2.1rem;
+  line-height: 1.05;
+  margin-bottom: .5rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+.hero p.lead {
+  max-width: 820px;
+  color: #475569;
+  margin: 0 auto 1rem;
+  font-size: 1rem;
+}
+
+/* feature tiles */
+.features {
+  display:flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  width:100%;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.feature {
+  background: rgba(255,255,255,0.9);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  min-width: 200px;
+  box-shadow: 0 12px 36px rgba(12,15,30,0.04);
+  border: 1px solid rgba(99,102,241,0.04);
+}
+.feature h4 { margin: 0; font-weight: 700; color:#0f172a; font-size: .95rem; }
+.feature p { margin: .45rem 0 0; color:#475569; font-size:.92rem; }
+
+/* main CTA row */
+.hero-actions { margin-top: 1.2rem; display:flex; gap:.9rem; justify-content:center; }
+.btn-primary {
+  background: linear-gradient(90deg,#7c3aed,#06b6d4);
+  color: white;
+  padding: .7rem 1.05rem;
+  border-radius: 12px;
+  font-weight:700;
+  box-shadow: 0 12px 36px rgba(99,102,241,0.14);
+  border: none;
+  text-decoration:none;
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(15,23,42,0.06);
+  padding: .6rem .95rem;
+  border-radius: 12px;
+  color: #0f172a;
+}
+
+/* login card: centered below hero */
+.login-card {
+  max-width: 520px;
+  margin: 0 auto;
+  border-radius: 14px;
+  padding: 1.5rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,250,255,0.9));
+  border: 1px solid rgba(12,20,60,0.04);
+  box-shadow: 0 18px 54px rgba(10,15,30,0.06);
+}
+.login-card h3 { margin: 0 0 .6rem 0; font-size: 1.05rem; color:#0f172a; }
+.login-input { width:100%; padding:.68rem .85rem; border-radius:10px; border:1px solid #e6e9ef; outline:none; }
+.login-input:focus { box-shadow: 0 10px 30px rgba(124,58,237,0.08); border-color: #7c3aed; }
+
+/* small helper text and links */
+.small-muted { color:#6b7280; font-size:.94rem; }
+.login-footer { margin-top:.9rem; display:flex; justify-content:space-between; align-items:center; gap:.6rem; flex-wrap:wrap; }
+
+/* responsive tweaks */
+@media (max-width: 900px) {
+  .hero h1 { font-size: 1.6rem; }
+  .features { gap:.6rem; }
+  .btn-primary { padding: .6rem .85rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-center" role="main" aria-labelledby="landing-title">
+  <div class="landing-wrap" data-aos="fade-up">
+
+    <!-- HERO (centered) -->
+    <div class="hero" id="landing-title">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="logo" style="width:58px;height:58px;border-radius:10px;box-shadow:0 8px 24px rgba(12,15,30,0.06);">
+        <div style="text-align:left;">
+          <div style="font-weight:700;color:#0f172a;">AI Based Education & Assessment</div>
+          <div style="font-size:12px;color:#64748b;margin-top:-4px;">Smart, AI-assisted remediation • Gamified learning</div>
+        </div>
+      </div>
+
+      <h1>Smarter assessments. Personalised remediation. Meaningful progress.</h1>
+      <p class="lead">Teachers create MCQ assessments; students attempt once and receive instant scoring. The platform analyses topic-level weaknesses and uses AI + the YouTube API to recommend targeted remediation videos. Gamification (XP & badges) keeps students motivated.</p>
+
+      <div class="features" role="list">
+        <div class="feature" role="listitem"><h4>Automated grading</h4><p>Save time with instant scoring and question-level analytics.</p></div>
+        <div class="feature" role="listitem"><h4>AI remediation</h4><p>Targeted YouTube tutorials recommended by AI for each weak topic.</p></div>
+        <div class="feature" role="listitem"><h4>Gamified progress</h4><p>Earn XP and badges, view leaderboards and celebrate learning.</p></div>
+      </div>
+
+      <div class="hero-actions" role="group">
+        <a class="btn-primary" href="{{ url_for('leaderboard') }}">View leaderboard</a>
+        <a class="btn-ghost" href="{{ url_for('login') }}">Sign in</a>
+      </div>
+    </div>
+
+    <!-- LOGIN CARD (centered) -->
+    <div class="login-card" data-aos="fade-up" aria-labelledby="login-title">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <h3 id="login-title">Sign in to your account</h3>
+        <div class="small-muted">New? Ask your admin to create an account</div>
+      </div>
+
+            {% if form %}
+          <form method="post" action="{{ url_for('login') }}" class="mt-4" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+          {{ form.username.label(class="block text-sm font-medium text-slate-700 mb-1") }}
+          {{ form.username(class="login-input") }}
+          {% if form.username.errors %}
+          <div class="text-rose-600 text-sm mt-1">{{ form.username.errors[0] }}</div>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          {{ form.password.label(class="block text-sm font-medium text-slate-700 mb-1") }}
+          {{ form.password(class="login-input") }}
+          {% if form.password.errors %}
+          <div class="text-rose-600 text-sm mt-1">{{ form.password.errors[0] }}</div>
+          {% endif %}
+        </div>
+
+        <div class="login-footer">
+          <div></div>
+          <div style="display:flex; gap:.6rem;">
+            <button type="submit" class="btn-primary">Login</button>
+            <a class="btn-ghost" href="#">Help</a>
+          </div>
+        </div>
+      </form>
+
+      {% else %}
+      <form method="post" action="{{ url_for('login') }}" class="mt-4" novalidate>
+        <div class="mb-3">
+          <label class="block text-sm text-slate-700 mb-1">Username</label>
+          <input name="username" class="login-input" autocomplete="username" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="block text-sm text-slate-700 mb-1">Password</label>
+          <input name="password" type="password" class="login-input" autocomplete="current-password" required>
+        </div>
+
+        <div class="login-footer">
+          <div></div>
+          <div style="display:flex; gap:.6rem;">
+            <button type="submit" class="btn-primary">Login</button>
+            <a class="btn-ghost" href="#">Help</a>
+          </div>
+        </div>
+      </form>
+      {% endif %}
+
+
+      <div class="mt-3 small-muted">Forgotten password? Contact your administrator. Demo accounts available on request.</div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

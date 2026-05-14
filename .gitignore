@@ -1,0 +1,70 @@
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# ========================
+# Virtual Environments
+# ========================
+.venv/
+venv/
+env/
+ENV/
+
+# ========================
+# Environment Variables (SECRETS - never commit)
+# ========================
+.env
+.env.*
+!.env.example
+
+# ========================
+# Flask / SQLAlchemy
+# ========================
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# ========================
+# Large media files
+# ========================
+demo.mp4
+*.mp4
+*.mov
+*.avi
+
+# ========================
+# IDEs & Editors
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ========================
+# OS generated files
+# ========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========================
+# Logs
+# ========================
+*.log
+logs/
+
+# ========================
+# Build / Distribution
+# ========================
+dist/
+build/
+*.egg-info/
+.eggs/

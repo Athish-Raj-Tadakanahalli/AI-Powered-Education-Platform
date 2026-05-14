@@ -1,0 +1,12 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-WTF
+passlib
+python-dotenv
+pymysql 
+google-generativeai
+google-api-python-client
+python-dotenv
+chartjs
+flask_migrate
