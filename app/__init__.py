@@ -6,7 +6,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from dotenv import load_dotenv
 from datetime import datetime
-from flask import current_app
 
 load_dotenv()
 
@@ -24,8 +23,8 @@ def create_app():
 
     app.config.from_object('app.config.Config')
     CORS(app)
-    db.init_app(app)
 
+    db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'login'
 
@@ -35,6 +34,23 @@ def create_app():
 
     with app.app_context():
         from . import routes, models
+        from .models import User
+
         db.create_all()
+
+        admin = User.query.filter_by(username="admin").first()
+
+        if admin is None:
+            admin = User(
+                username="admin",
+                email="admin@example.com",
+                password_hash=User.hash_password("admin123"),
+                role="admin",
+                full_name="Administrator",
+                is_approved=True,
+                approval_status="approved"
+            )
+            db.session.add(admin)
+            db.session.commit()
 
     return app
