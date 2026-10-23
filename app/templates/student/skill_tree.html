@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% block title %}Course Skill Tree — Talent Progression{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8 pb-16 font-inter">
+
+  <!-- TOP BREADCRUMB & HEADER -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4" data-aos="fade-down">
+    <div>
+      <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+        <a href="{{ url_for('student_dashboard') }}" class="hover:text-indigo-500 transition-colors flex items-center gap-1">
+          <i data-feather="arrow-left" class="w-3.5 h-3.5"></i>
+          <span>Dashboard</span>
+        </a>
+        <span>/</span>
+        <span class="text-indigo-600 dark:text-indigo-400">Course Skill Tree</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+        <span>Computer Science Skill Tree</span>
+        <span class="text-xl">🌳</span>
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
+        Level up through progressive talent milestones. Advanced skills remain locked until you demonstrate mastery (≥ 60% score) on preceding prerequisite topics.
+      </p>
+    </div>
+
+    <!-- Overall Track Progress Pill Card -->
+    <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-lg flex items-center gap-4">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-cyan-500/25">
+        {{ skill_tree.progress_pct }}%
+      </div>
+      <div>
+        <div class="text-xs text-slate-400 font-semibold">Track Completion</div>
+        <div class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+          {{ skill_tree.mastered_count }} of {{ skill_tree.total_nodes }} Mastered
+        </div>
+        <div class="w-28 bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+          <div class="bg-gradient-to-r from-cyan-500 to-indigo-600 h-full rounded-full transition-all duration-1000" style="width: {{ skill_tree.progress_pct }}%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TWO COLUMN LAYOUT: TALENT TREE (LEFT) + RADAR & PERKS (RIGHT) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+    <!-- LEFT COLUMN: TALENT TREE PROGRESSION (lg:col-span-8) -->
+    <div class="lg:col-span-8 space-y-6" data-aos="fade-up">
+
+      <div class="reactbits-spotlight bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800 shadow-xl relative overflow-hidden" data-spotlight="true">
+        <!-- Ambient decorative glow -->
+        <div class="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 space-y-8">
+          {% for node in skill_tree.nodes %}
+            <div class="relative">
+
+              <!-- Node Card -->
+              <div class="rounded-2xl p-5 sm:p-6 border transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10
+                {% if node.status == 'mastered' %}
+                  bg-gradient-to-br from-emerald-500/15 via-slate-900/60 to-slate-900/90 border-emerald-500/50 shadow-lg shadow-emerald-500/10
+                {% elif node.status == 'available' %}
+                  bg-gradient-to-br from-cyan-500/15 via-indigo-600/15 to-slate-900/90 border-cyan-400/60 shadow-xl shadow-cyan-500/15 ring-2 ring-cyan-400/30
+                {% else %}
+                  bg-slate-900/40 border-slate-800/80 opacity-60
+                {% endif %}">
+
+                <!-- Left Info & Badges -->
+                <div class="flex items-start gap-4">
+                  <!-- Node Icon Badge -->
+                  <div class="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 font-bold transition-transform duration-300 hover:scale-105 shadow-md
+                    {% if node.status == 'mastered' %}
+                      bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-emerald-500/30
+                    {% elif node.status == 'available' %}
+                      bg-gradient-to-tr from-cyan-500 to-indigo-600 text-white shadow-cyan-500/30 animate-pulse
+                    {% else %}
+                      bg-slate-800 text-slate-500 border border-slate-700
+                    {% endif %}">
+                    <i data-feather="{{ node.icon }}" class="w-6 h-6"></i>
+                  </div>
+
+                  <!-- Text Details -->
+                  <div class="space-y-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        {{ node.level_label }} • {{ node.category }}
+                      </span>
+
+                      {% if node.status == 'mastered' %}
+                        <span class="inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
+                          <i data-feather="check-circle" class="w-3 h-3"></i>
+                          <span>Mastered ({{ node.score }}%)</span>
+                        </span>
+                      {% elif node.status == 'available' %}
+                        <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
+                          <i data-feather="zap" class="w-3 h-3"></i>
+                          <span>Active Challenge</span>
+                        </span>
+                      {% else %}
+                        <span class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                          <i data-feather="lock" class="w-3 h-3"></i>
+                          <span>Locked</span>
+                        </span>
+                      {% endif %}
+                    </div>
+
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                      {{ node.title }}
+                    </h3>
+
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-lg">
+                      {{ node.description }}
+                    </p>
+
+                    <div class="text-[11px] text-slate-400 pt-1">
+                      Requirement: <strong class="text-slate-300">Score ≥ {{ node.required_score }}%</strong> on topic milestone
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Action Button -->
+                <div class="shrink-0 flex items-center justify-end sm:flex-col sm:items-end gap-2">
+                  {% if node.status == 'mastered' %}
+                    <div class="text-right">
+                      <span class="text-xs font-bold text-emerald-400 block">Tier Complete ✓</span>
+                      {% if node.assessment_id %}
+                        <a href="{{ url_for('take_assessment', assessment_id=node.assessment_id) }}?retake=1" class="mt-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-all inline-flex items-center gap-1.5">
+                          <i data-feather="repeat" class="w-3.5 h-3.5 text-indigo-400"></i>
+                          <span>Practice Again</span>
+                        </a>
+                      {% endif %}
+                    </div>
+                  {% elif node.status == 'available' %}
+                    <div class="text-right">
+                      <span class="text-xs font-bold text-cyan-300 block mb-1">Ready to Unlock</span>
+                      {% if node.assessment_id %}
+                        <a href="{{ url_for('take_assessment', assessment_id=node.assessment_id) }}" class="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-cyan-500/25 transition-all inline-flex items-center gap-2 cursor-pointer">
+                          <span>Take Milestone Quiz</span>
+                          <i data-feather="arrow-right" class="w-4 h-4"></i>
+                        </a>
+                      {% endif %}
+                    </div>
+                  {% else %}
+                    <div class="text-right">
+                      <span class="text-xs font-semibold text-slate-500 flex items-center gap-1">
+                        <i data-feather="lock" class="w-3.5 h-3.5"></i>
+                        <span>Locked Prerequisite</span>
+                      </span>
+                    </div>
+                  {% endif %}
+                </div>
+
+              </div>
+
+              <!-- Connecting Branch to next node -->
+              {% if not loop.last %}
+                <div class="flex justify-center my-1 relative h-8">
+                  <div class="w-1 h-full rounded-full transition-colors duration-500
+                    {% if node.status == 'mastered' %}
+                      bg-gradient-to-b from-emerald-500 to-cyan-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]
+                    {% else %}
+                      bg-slate-800 border-dashed
+                    {% endif %}">
+                  </div>
+                </div>
+              {% endif %}
+
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: RADAR CHART & MASTERY BENEFITS (lg:col-span-4) -->
+    <div class="lg:col-span-4 space-y-6" data-aos="fade-up" data-aos-delay="100">
+
+      <!-- Spider / Radar Chart Card -->
+      <div class="reactbits-spotlight bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xl" data-spotlight="true">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>Competency Radar</span>
+              <span>🕸️</span>
+            </h3>
+            <p class="text-xs text-slate-400">Live 5-domain mastery</p>
+          </div>
+          <span class="text-xs font-black text-indigo-400 bg-indigo-500/20 px-2.5 py-1 rounded-full border border-indigo-400/30">
+            {{ radar_data.average }}% Avg
+          </span>
+        </div>
+
+        <div class="h-64 relative mt-3 flex items-center justify-center">
+          <canvas id="treeRadarChart"></canvas>
+        </div>
+
+        <!-- Domain score chips -->
+        <div class="space-y-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+          {% for label in radar_data.labels %}
+            {% set val = radar_data.scores[loop.index0] %}
+            {% set badge = radar_data.badges[loop.index0] %}
+            <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-700/50">
+              <span class="text-xs text-slate-700 dark:text-slate-300 font-medium">{{ label }}</span>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black text-slate-900 dark:text-white">{{ val }}%</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded
+                  {% if badge == 'Master' %} bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400
+                  {% elif badge == 'Proficient' %} bg-cyan-100 dark:bg-cyan-950 text-cyan-600 dark:text-cyan-400
+                  {% elif badge == 'Developing' %} bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400
+                  {% else %} bg-slate-100 dark:bg-slate-800 text-slate-400 {% endif %}">
+                  {{ badge }}
+                </span>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Talent Progression Mechanics Guide -->
+      <div class="reactbits-spotlight bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xl space-y-3" data-spotlight="true">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i data-feather="help-circle" class="w-4 h-4 text-indigo-400"></i>
+          <span>How The Skill Tree Works</span>
+        </h3>
+        <ul class="text-xs text-slate-400 space-y-2.5">
+          <li class="flex items-start gap-2">
+            <span class="text-cyan-400 font-bold">1.</span>
+            <span>Skills unlock in linear sequence from foundational syntax to advanced systems.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyan-400 font-bold">2.</span>
+            <span>Achieve at least <strong>60% score</strong> on a quiz to master the node and illuminate the path to the next skill.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-cyan-400 font-bold">3.</span>
+            <span>Every milestone quiz awards XP and updates your 5-domain Knowledge Radar in real time.</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    try { feather.replace(); } catch(e) {}
+
+    const radarLabels = {{ radar_data.labels|tojson or '[]' }};
+    const radarValues = {{ radar_data.scores|tojson or '[]' }};
+    const canvas = document.getElementById('treeRadarChart');
+
+    if (canvas && radarLabels.length > 0) {
+      const ctx = canvas.getContext('2d');
+      const isDark = document.documentElement.classList.contains('dark');
+
+      new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: radarLabels,
+          datasets: [{
+            label: 'Proficiency %',
+            data: radarValues,
+            backgroundColor: 'rgba(6, 182, 212, 0.25)',
+            borderColor: '#06b6d4',
+            borderWidth: 2.5,
+            pointBackgroundColor: '#6366f1',
+            pointBorderColor: '#ffffff',
+            pointHoverBackgroundColor: '#ffffff',
+            pointHoverBorderColor: '#06b6d4',
+            pointRadius: 4,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              angleLines: {
+                color: isDark ? 'rgba(148, 163, 184, 0.2)' : 'rgba(148, 163, 184, 0.3)'
+              },
+              grid: {
+                color: isDark ? 'rgba(148, 163, 184, 0.15)' : 'rgba(148, 163, 184, 0.2)'
+              },
+              pointLabels: {
+                color: isDark ? '#cbd5e1' : '#334155',
+                font: { size: 9, weight: 'bold', family: 'Inter' }
+              },
+              suggestedMin: 0,
+              suggestedMax: 100,
+              ticks: {
+                stepSize: 25,
+                backdropColor: 'transparent',
+                color: 'rgba(148, 163, 184, 0.6)',
+                callback: v => v + '%'
+              }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` Mastery: ${ctx.raw}%`
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

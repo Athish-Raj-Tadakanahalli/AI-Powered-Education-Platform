@@ -12,6 +12,7 @@ __pycache__/
 # Virtual Environments
 # ========================
 .venv/
+.venv-1/
 venv/
 env/
 ENV/
@@ -30,6 +31,14 @@ instance/
 *.db
 *.sqlite
 *.sqlite3
+
+# ========================
+# Node.js
+# ========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # ========================
 # Large media files
@@ -68,3 +77,12 @@ dist/
 build/
 *.egg-info/
 .eggs/
+
+# ========================
+# Android / Gradle build artifacts
+# ========================
+android/.gradle/
+android/app/build/
+android/build/
+*.apk
+*.aab

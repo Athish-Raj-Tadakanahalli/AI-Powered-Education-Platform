@@ -2,11 +2,11 @@ Flask
 Flask-SQLAlchemy
 Flask-Login
 Flask-WTF
+Flask-CORS
 passlib
 python-dotenv
-pymysql 
+pymysql
 google-generativeai
 google-api-python-client
-python-dotenv
-chartjs
 flask_migrate
+waitress

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AI Education App</string>
+    <string name="title_activity_main">AI Education App</string>
+    <string name="package_name">com.aieducation.assessment</string>
+    <string name="custom_url_scheme">com.aieducation.assessment</string>
+</resources>

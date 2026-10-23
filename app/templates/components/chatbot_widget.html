@@ -1,0 +1,221 @@
+<!-- Floating EduBot AI Chatbot Widget -->
+<div id="edubot-widget-container" class="fixed bottom-6 right-6 z-50 font-inter">
+
+  <!-- Floating Chatbot Launcher Button -->
+  <button id="edubot-launcher-btn" onclick="toggleEduBotChat()" type="button" aria-label="Open AI Assistant" class="group relative flex items-center gap-3 p-2.5 sm:p-3 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 text-white rounded-full shadow-2xl border border-cyan-500/40 hover:border-cyan-400 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer shadow-cyan-500/20">
+    <!-- Glowing Bot Avatar Icon -->
+    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-slate-950 p-1 flex items-center justify-center shrink-0 relative animate-bot-float">
+      <img src="{{ url_for('static', filename='img/chatbot_avatar.svg') }}" alt="EduBot" class="w-full h-full object-contain" />
+      <!-- Online Pulse Indicator -->
+      <span class="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500 border-2 border-slate-900"></span>
+      </span>
+    </div>
+
+    <!-- Collapsible Label on Desktop -->
+    <div class="hidden sm:flex flex-col items-start pr-2">
+      <span class="text-xs font-black tracking-wide text-white flex items-center gap-1.5">
+        <span>EduBot AI</span>
+        <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">Tutor</span>
+      </span>
+      <span class="text-[10px] text-slate-400 font-medium">Click to chat</span>
+    </div>
+  </button>
+
+  <!-- Popup Chat Window (Hidden by default, slides up when clicked) -->
+  <div id="edubot-chat-popup" class="hidden fixed bottom-20 right-4 sm:right-6 z-50 w-[92vw] sm:w-[380px] h-[520px] max-h-[82vh] bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-2xl border border-cyan-500/30 shadow-2xl rounded-3xl flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right">
+
+    <!-- Header -->
+    <div class="px-4 py-3.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-slate-800 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-slate-950 border border-cyan-500/40 p-1 flex items-center justify-center shrink-0 shadow-sm animate-bot-float">
+          <img src="{{ url_for('static', filename='img/chatbot_avatar.svg') }}" alt="EduBot" class="w-full h-full object-contain" />
+        </div>
+        <div>
+          <h3 class="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
+            <span>EduBot AI</span>
+            <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">Online</span>
+          </h3>
+          <p class="text-[10px] text-slate-400">24/7 Smart Study Assistant</p>
+        </div>
+      </div>
+
+      <!-- Close / Minimize Button -->
+      <button onclick="toggleEduBotChat()" type="button" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer" title="Minimize Chat">
+        <i data-feather="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Quick Prompt Chips -->
+    <div class="px-3.5 py-2 bg-slate-950/60 border-b border-slate-800/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+      <button type="button" onclick="setEduBotQuickPrompt('Explain time complexity with examples')" class="text-[10px] whitespace-nowrap px-2.5 py-1 rounded-lg bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900/60 border border-indigo-800/60 transition-colors cursor-pointer shrink-0">
+        💡 Time complexity
+      </button>
+      <button type="button" onclick="setEduBotQuickPrompt('Give me a 3-step study strategy')" class="text-[10px] whitespace-nowrap px-2.5 py-1 rounded-lg bg-purple-950/60 text-purple-300 hover:bg-purple-900/60 border border-purple-800/60 transition-colors cursor-pointer shrink-0">
+        🎯 Study strategy
+      </button>
+      <button type="button" onclick="setEduBotQuickPrompt('Summarize database normalization (1NF, 2NF)')" class="text-[10px] whitespace-nowrap px-2.5 py-1 rounded-lg bg-cyan-950/60 text-cyan-300 hover:bg-cyan-900/60 border border-cyan-800/60 transition-colors cursor-pointer shrink-0">
+        📚 Normalization
+      </button>
+    </div>
+
+    <!-- Chat Messages Window -->
+    <div id="edubot-chat-window" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-950/40 text-slate-200 text-xs">
+      <!-- Initial greeting populated by JS -->
+    </div>
+
+    <!-- Input Bar -->
+    <div class="p-3 bg-slate-900/90 border-t border-slate-800/80 shrink-0">
+      <div class="flex items-center gap-2">
+        <input id="edubot-chat-input" type="text" class="flex-1 px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors" placeholder="Ask a study question or concept..." autocomplete="off" />
+        <button id="edubot-chat-send" type="button" class="w-9 h-9 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold flex items-center justify-center transition-all shadow-md shadow-cyan-500/20 cursor-pointer shrink-0">
+          <i data-feather="send" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- EduBot Widget Script -->
+<script>
+  let isEduBotOpen = false;
+  const botAvatarUrl = "{{ url_for('static', filename='img/chatbot_avatar.svg') }}";
+  const userInitial = "{{ (current_user.full_name or current_user.username)[0]|upper if current_user.is_authenticated else 'S' }}";
+
+  function toggleEduBotChat() {
+    const popup = document.getElementById('edubot-chat-popup');
+    const input = document.getElementById('edubot-chat-input');
+    if (!popup) return;
+
+    isEduBotOpen = !isEduBotOpen;
+    if (isEduBotOpen) {
+      popup.classList.remove('hidden');
+      setTimeout(() => {
+        popup.classList.add('scale-100', 'opacity-100');
+        if (input) input.focus();
+      }, 10);
+    } else {
+      popup.classList.remove('scale-100', 'opacity-100');
+      setTimeout(() => {
+        popup.classList.add('hidden');
+      }, 200);
+    }
+    try { feather.replace(); } catch(e) {}
+  }
+
+  function setEduBotQuickPrompt(text) {
+    const input = document.getElementById('edubot-chat-input');
+    if (input) {
+      input.value = text;
+      input.focus();
+    }
+  }
+
+  (function initEduBot() {
+    const chatWindow = document.getElementById('edubot-chat-window');
+    const chatInput = document.getElementById('edubot-chat-input');
+    const chatBtn = document.getElementById('edubot-chat-send');
+
+    if (!chatWindow || !chatInput || !chatBtn) return;
+
+    // Initial bot welcome
+    appendEduBotMessage('Assistant', "Hi! I'm EduBot, your AI tutor. Ask me any study question, algorithm concept, or test revision tips!");
+
+    function formatBotMessage(text) {
+      if (!text) return '';
+      let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      escaped = escaped.replace(/^\s*[-*]\s+(.*?)$/gm, '<li>$1</li>');
+      escaped = escaped.replace(/(<li>.*?<\/li>)+/g, '<ul class="list-disc pl-4 my-1">$1</ul>');
+      escaped = escaped.replace(/`(.*?)`/g, '<code class="bg-slate-800 text-cyan-300 px-1 py-0.5 rounded text-[11px]">$1</code>');
+      escaped = escaped.replace(/\n/g, '<br>');
+      return escaped;
+    }
+
+    function appendEduBotMessage(who, text, isTyping = false) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'flex items-start gap-2 ' + (who === 'You' ? 'justify-end' : 'justify-start');
+
+      let html = '';
+      if (who === 'You') {
+        html = `
+          <div class="max-w-[85%] rounded-2xl rounded-tr-sm px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-xs shadow-sm">
+            <span class="font-bold text-[9px] block opacity-75 uppercase tracking-wider">You</span>
+            <div class="leading-relaxed">${formatBotMessage(text)}</div>
+          </div>
+          <div class="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm border border-indigo-400/30">
+            ${userInitial}
+          </div>
+        `;
+      } else {
+        html = `
+          <div class="w-7 h-7 rounded-xl bg-slate-900 border border-cyan-500/40 p-0.5 flex items-center justify-center shrink-0 shadow-sm">
+            <img src="${botAvatarUrl}" alt="EduBot" class="w-full h-full object-contain" />
+          </div>
+          <div class="max-w-[85%] rounded-2xl rounded-tl-sm px-3.5 py-2 bg-slate-900 text-slate-200 text-xs border border-slate-800 shadow-sm">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="font-bold text-[9px] text-cyan-400 uppercase tracking-wider">EduBot</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+            </div>
+            <div class="leading-relaxed">
+              ${isTyping ? `
+                <div class="flex items-center gap-1 py-1 text-cyan-400">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce"></span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.2s]"></span>
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.4s]"></span>
+                </div>
+              ` : formatBotMessage(text)}
+            </div>
+          </div>
+        `;
+      }
+
+      wrapper.innerHTML = html;
+      chatWindow.appendChild(wrapper);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+      return wrapper;
+    }
+
+    async function handleSend() {
+      const q = chatInput.value.trim();
+      if (!q) return;
+      appendEduBotMessage('You', q);
+      chatInput.value = '';
+      chatBtn.disabled = true;
+
+      const typingEl = appendEduBotMessage('Assistant', '', true);
+
+      try {
+        const res = await fetch("{{ url_for('student_chat') }}", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ q })
+        });
+        const data = await res.json();
+        if (typingEl && typingEl.parentNode) {
+          typingEl.parentNode.removeChild(typingEl);
+        }
+        appendEduBotMessage('Assistant', data.answer || 'No answer received.');
+      } catch (e) {
+        if (typingEl && typingEl.parentNode) {
+          typingEl.parentNode.removeChild(typingEl);
+        }
+        appendEduBotMessage('Assistant', 'Service error. Please try again.');
+      } finally {
+        chatBtn.disabled = false;
+        chatInput.focus();
+      }
+    }
+
+    chatBtn.addEventListener('click', handleSend);
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+  })();
+</script>

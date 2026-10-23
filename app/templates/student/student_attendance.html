@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Student - My Attendance{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8">
+  <!-- Header Card -->
+  <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4" data-aos="fade-up">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold text-xl">📊</span>
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">My Attendance Dashboard</h2>
+      </div>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Track your overall and subject-wise attendance records.</p>
+    </div>
+    <div>
+      <a href="{{ url_for('student_dashboard') }}" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-xl text-sm transition-colors">
+        ← Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Section 1: Overview Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-aos="fade-up">
+    <!-- Overall Percentage Card -->
+    <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+      <div class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Overall Attendance</div>
+      <div class="mt-2 flex items-baseline justify-between">
+        <div class="text-3xl font-extrabold {% if overall_percentage >= 75 %}text-emerald-600 dark:text-emerald-400{% else %}text-rose-600 dark:text-rose-400{% endif %}">
+          {{ overall_percentage }}%
+        </div>
+        <span class="text-xs px-2.5 py-1 rounded-full font-semibold {% if overall_percentage >= 75 %}bg-emerald-500/10 text-emerald-600 border border-emerald-500/20{% else %}bg-rose-500/10 text-rose-600 border border-rose-500/20{% endif %}">
+          {% if overall_percentage >= 75 %}Eligible (≥75%){% else %}Low Attendance{% endif %}
+        </span>
+      </div>
+      <div class="mt-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+        <div class="h-2 rounded-full {% if overall_percentage >= 75 %}bg-emerald-500{% else %}bg-rose-500{% endif %}" style="width: {{ overall_percentage }}%"></div>
+      </div>
+    </div>
+
+    <!-- Total Classes Card -->
+    <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+      <div class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Classes Conducted</div>
+      <div class="mt-2 text-3xl font-extrabold text-slate-800 dark:text-slate-100">
+        {{ total_classes }}
+      </div>
+      <div class="mt-2 text-xs text-slate-400">Total sessions recorded</div>
+    </div>
+
+    <!-- Present Count Card -->
+    <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+      <div class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Classes Attended</div>
+      <div class="mt-2 text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+        {{ total_present }}
+      </div>
+      <div class="mt-2 text-xs text-emerald-600/80 dark:text-emerald-400/80 font-medium">✓ Present days</div>
+    </div>
+
+    <!-- Absent Count Card -->
+    <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+      <div class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Classes Missed</div>
+      <div class="mt-2 text-3xl font-extrabold text-rose-600 dark:text-rose-400">
+        {{ total_absent }}
+      </div>
+      <div class="mt-2 text-xs text-rose-600/80 dark:text-rose-400/80 font-medium">✗ Absent days</div>
+    </div>
+  </div>
+
+  <!-- Section 2: Subject-Wise Attendance Breakdown -->
+  <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4" data-aos="fade-up">
+    <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+      <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Subject-Wise Attendance</h3>
+      <p class="text-xs text-slate-500">Breakdown of attendance for each enrolled subject</p>
+    </div>
+
+    {% if subject_wise %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for sw in subject_wise %}
+          <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="font-bold text-slate-800 dark:text-slate-100 text-base">{{ sw.subject.name }}</h4>
+                {% if sw.subject.teacher %}
+                  <p class="text-xs text-slate-400">Teacher: {{ sw.subject.teacher.full_name or sw.subject.teacher.username }}</p>
+                {% endif %}
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold {% if sw.percentage >= 75 %}bg-emerald-500/10 text-emerald-600 border border-emerald-500/20{% else %}bg-rose-500/10 text-rose-600 border border-rose-500/20{% endif %}">
+                {{ sw.percentage }}%
+              </span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+              <div class="h-2 rounded-full {% if sw.percentage >= 75 %}bg-emerald-500{% else %}bg-rose-500{% endif %}" style="width: {{ sw.percentage }}%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1">
+              <span>Total Classes: <strong>{{ sw.total }}</strong></span>
+              <span class="text-emerald-600 dark:text-emerald-400">Present: <strong>{{ sw.present }}</strong></span>
+              <span class="text-rose-600 dark:text-rose-400">Absent: <strong>{{ sw.absent }}</strong></span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="p-6 text-center text-slate-500 text-sm bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+        No subject attendance records available yet.
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Section 3: Detailed Attendance History Log -->
+  <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4" data-aos="fade-up">
+    <div class="border-b border-slate-100 dark:border-slate-800 pb-3">
+      <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Attendance Log History</h3>
+      <p class="text-xs text-slate-500">Date-wise status for all conducted sessions</p>
+    </div>
+
+    {% if records %}
+      <div class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800">
+        <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+          <thead class="bg-slate-50 dark:bg-slate-800/80 text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200/80 dark:border-slate-800">
+            <tr>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Subject</th>
+              <th class="px-4 py-3">Teacher</th>
+              <th class="px-4 py-3 text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+            {% for r in records %}
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                <td class="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300 text-xs">
+                  {{ r.date.strftime('%Y-%m-%d') }}
+                </td>
+                <td class="px-4 py-3 font-semibold text-indigo-600 dark:text-indigo-400">
+                  {{ r.subject.name }}
+                </td>
+                <td class="px-4 py-3 text-xs text-slate-500">
+                  {{ r.teacher.full_name or r.teacher.username }}
+                </td>
+                <td class="px-4 py-3 text-center">
+                  {% if r.status == 'Present' %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      ✓ Present
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                      ✗ Absent
+                    </span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-6 text-center text-slate-500 text-sm bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+        No attendance records have been posted for your account yet.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

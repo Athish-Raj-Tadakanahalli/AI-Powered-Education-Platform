@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% set hide_chatbot = true %}
+{% block chatbot_widget %}{% endblock %}
+
 {% block title %}Take Assessment{% endblock %}
 
 {% block content %}
@@ -51,26 +54,67 @@
   </div>
 </div>
 
-<!-- Proctor overlay UI -->
-<div id="proctorOverlay" aria-live="polite" role="status" style="display:none;">
-  <div style="position: fixed; right: 20px; bottom: 20px; width: 320px; z-index: 99999; font-family: sans-serif; box-shadow: 0 6px 20px rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; background: rgba(255,255,255,0.95);">
-    <div style="padding:8px 10px; font-weight:600; background:#111827;color:#fff;">Proctoring</div>
-    <div style="padding:10px; font-size:13px; color:#111827;">
-      <div>Webcam: <span id="proctorStatus" style="color:#047857;font-weight:700">Initializing…</span></div>
-      <div>Checks: <span id="proctorChecks">0</span></div>
-      <div>Violations: <span id="proctorViolations">0</span></div>
-      <div style="font-size:11px;margin-top:6px;color:#6b7280">
-        Please remain facing the screen. This session will be monitored for exam integrity.
+<!-- Live Proctoring Floating Status Pill Widget -->
+<div id="proctorOverlay" aria-live="polite" role="status" style="display:none;" class="fixed top-20 right-6 z-50 transition-all duration-300">
+  <div class="bg-slate-900/90 dark:bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-slate-700/60 p-3.5 w-72 space-y-2.5">
+    
+    <!-- Header status pill -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span id="proctorPulseDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 live-pulse"></span>
+        <span id="proctorStatus" class="text-xs font-bold tracking-wide text-emerald-400">Initializing...</span>
       </div>
-      <video id="proctorVideo" autoplay muted playsinline style="display:none;width:160px;height:120px;border-radius:6px;margin-top:8px"></video>
+      <button type="button" onclick="togglePipCamera()" class="p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition-colors" title="Toggle camera preview">
+        <i data-feather="video" class="w-3.5 h-3.5"></i>
+      </button>
     </div>
+
+    <!-- Live metrics tags -->
+    <div class="grid grid-cols-2 gap-2 text-center text-xs">
+      <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
+        <span class="text-[10px] text-slate-400 block uppercase font-medium tracking-wider">Checks</span>
+        <span id="proctorChecks" class="text-sm font-bold text-slate-100">0</span>
+      </div>
+      <div class="p-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
+        <span class="text-[10px] text-slate-400 block uppercase font-medium tracking-wider">Alerts</span>
+        <span id="proctorViolations" class="text-sm font-bold text-emerald-400">0</span>
+      </div>
+    </div>
+
+    <!-- Mini PIP Camera Preview Container -->
+    <div id="pipCamContainer" class="hidden relative rounded-xl overflow-hidden bg-black border border-slate-800">
+      <video id="proctorVideo" autoplay muted playsinline class="w-full h-24 object-cover"></video>
+      <div class="absolute bottom-1 right-1.5 px-1.5 py-0.5 rounded bg-slate-900/80 text-[10px] text-slate-300 font-mono">LIVE</div>
+    </div>
+
+    <p class="text-[11px] text-slate-400 leading-tight">
+      Session integrity monitored. Keep face centered.
+    </p>
   </div>
 </div>
 
-<div id="proctorAlertBanner" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:200000;background:rgba(220,38,38,0.95);color:white;padding:10px 16px;border-radius:8px;font-weight:700;">ALERT: Please look at your screen — no malpractice allowed.</div>
+<div id="proctorAlertBanner" style="display:none;" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-rose-600/95 text-white px-5 py-2.5 rounded-xl font-bold shadow-2xl backdrop-blur-md border border-rose-500 text-xs sm:text-sm">
+  ALERT: Please look at your screen — no malpractice allowed.
+</div>
 
-<!-- small beep (place a small beep file at static/sounds/alert_beep.mp3) -->
-<audio id="proctorBeep" src="{{ url_for('static', filename='sounds/alert_beep.mp3') }}" preload="auto"></audio>
+<!-- Fullscreen prompt overlay -->
+<div id="fullscreenPrompt" style="display:none;position:fixed;inset:0;z-index:250000;background:rgba(15,23,42,0.95);color:white;flex-direction:column;align-items:center;justify-content:center;font-family:sans-serif;padding:20px;text-align:center;">
+  <div style="background:rgba(30,41,59,0.7);border:1px solid rgba(239,68,68,0.3);border-radius:16px;padding:40px;max-width:520px;box-shadow:0 10px 30px rgba(0,0,0,0.5);backdrop-filter:blur(8px);">
+    <div style="background:#ef4444;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+      <svg style="width:32px;height:32px;fill:none;stroke:white;stroke-width:2;" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+    </div>
+    <h3 style="font-size:24px;font-weight:700;margin-bottom:12px;color:#ef4444;">Fullscreen Mode Required</h3>
+    <p style="font-size:15px;line-height:1.6;margin-bottom:28px;color:#94a3b8;">
+      This assessment is proctored and must be taken in fullscreen mode. Exiting fullscreen mode or switching tabs is flagged as a violation.
+    </p>
+    <button onclick="reEnterFullscreen()" style="padding:12px 28px;background:#4f46e5;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(79,70,229,0.4);transition:all 0.2s;">
+      Re-enter Fullscreen
+    </button>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block body_extra %}
@@ -94,7 +138,7 @@
   const proctorChecks = document.getElementById('proctorChecks');
   const proctorViolations = document.getElementById('proctorViolations');
   const proctorBanner = document.getElementById('proctorAlertBanner');
-  const beep = document.getElementById('proctorBeep');
+  const fullscreenPrompt = document.getElementById('fullscreenPrompt');
 
   // config
   const CHECK_INTERVAL_MS = 900;
@@ -103,18 +147,13 @@
 
   // state
   let checks = 0, violations = 0, lastAlertAt = 0, intervalId = null;
-  let stopProctoringFunc = null;
 
-  // expose stopProctoring so other scripts can call before submit
-  window.stopProctoring = function(){
-    try {
-      if(intervalId) clearInterval(intervalId);
-      if(proctorVideo && proctorVideo.srcObject){
-        proctorVideo.srcObject.getTracks().forEach(t=>t.stop());
-      }
-      proctorOverlay.style.display = 'none';
-    } catch(e){ log('stopProctoring error', e); }
-  };
+  // show banner with custom warning message
+  function showBanner(msg){
+    proctorBanner.textContent = msg || "ALERT: Please look at your screen — no malpractice allowed.";
+    proctorBanner.style.display = 'block';
+    setTimeout(()=> proctorBanner.style.display = 'none', 3500);
+  }
 
   // send violation AJAX to server
   async function sendViolation(reason, details){
@@ -134,17 +173,118 @@
     } catch(e){ log('violation send failed', e); }
   }
 
-  function showBanner(){
-    proctorBanner.style.display = 'block';
-    try { beep.play().catch(()=>{}); } catch(e){}
-    setTimeout(()=> proctorBanner.style.display = 'none', 3000);
+  // Fullscreen and Tab monitoring handlers
+  function handleFullscreenChange() {
+    const isFullscreen = document.fullscreenElement || 
+                         document.webkitFullscreenElement || 
+                         document.mozFullScreenElement || 
+                         document.msFullscreenElement;
+    if (!isFullscreen && proctorOverlay.style.display === 'block') {
+      violations++;
+      proctorViolations.textContent = violations;
+      showBanner("ALERT: Fullscreen exited! Returning to fullscreen is required.");
+      sendViolation('exited_fullscreen', { checks, violations });
+      fullscreenPrompt.style.display = 'flex';
+    } else {
+      fullscreenPrompt.style.display = 'none';
+    }
   }
+
+  function handleVisibilityChange() {
+    if (document.hidden && proctorOverlay.style.display === 'block') {
+      violations++;
+      proctorViolations.textContent = violations;
+      showBanner("ALERT: Tab switch detected! Stay on the exam page.");
+      sendViolation('tab_switched', { checks, violations });
+    }
+  }
+
+  function handleWindowBlur() {
+    if (proctorOverlay.style.display === 'block') {
+      violations++;
+      proctorViolations.textContent = violations;
+      showBanner("ALERT: Window focus lost! Focus on the exam.");
+      sendViolation('tab_switched', { checks, violations });
+    }
+  }
+
+  // Request entering fullscreen mode helper
+  window.reEnterFullscreen = async function() {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      } else if (document.documentElement.webkitRequestFullscreen) {
+        await document.documentElement.webkitRequestFullscreen();
+      } else if (document.documentElement.mozRequestFullScreen) {
+        await document.documentElement.mozRequestFullScreen();
+      } else if (document.documentElement.msRequestFullscreen) {
+        await document.documentElement.msRequestFullscreen();
+      }
+    } catch(e) {
+      log('Re-enter fullscreen failed', e);
+    }
+  };
+
+  // Toggle PIP camera preview container
+  window.togglePipCamera = function() {
+    const pip = document.getElementById('pipCamContainer');
+    if (pip) {
+      pip.classList.toggle('hidden');
+    }
+  };
+
+  // expose stopProctoring so other scripts can call before submit
+  window.stopProctoring = function(){
+    try {
+      if(intervalId) clearInterval(intervalId);
+      if(proctorVideo && proctorVideo.srcObject){
+        proctorVideo.srcObject.getTracks().forEach(t=>t.stop());
+      }
+      proctorOverlay.style.display = 'none';
+
+      // Clean up event listeners
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+
+      // exit fullscreen cleanly
+      const isFullscreen = document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement;
+      if (isFullscreen) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      }
+    } catch(e){ log('stopProctoring error', e); }
+  };
 
   // start proctoring after consent
   async function startProctoring(){
     consentModal.style.display = 'none';
     proctorOverlay.style.display = 'block';
     submitBtn.disabled = false; // allow submit once proctoring running
+
+    // Request fullscreen automatically on start
+    await window.reEnterFullscreen();
+
+    // Register security event listeners
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
 
     // load face-api models
     try {
@@ -183,7 +323,7 @@
         if(!res){
           violations++;
           proctorViolations.textContent = violations;
-          showBanner();
+          showBanner("ALERT: No face detected. Please look at the screen.");
           sendViolation('no_face_detected', { checks, violations });
           return;
         }
@@ -198,7 +338,7 @@
         if(maxDelta > CENTER_THRESHOLD_RATIO){
           violations++;
           proctorViolations.textContent = violations;
-          showBanner();
+          showBanner("ALERT: Attention deviation. Please look straight.");
           sendViolation('face_off_center', { dx, dy, box });
         }
       } catch(e){

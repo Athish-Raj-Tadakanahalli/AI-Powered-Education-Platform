@@ -19,39 +19,231 @@
     </div>
 
     {% if new_badges and new_badges|length %}
-      <div class="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-emerald-50 rounded-lg flex items-center space-x-4">
-        <div class="text-indigo-700 font-semibold">New Badge(s):</div>
-        <div class="flex space-x-2">
+      <div class="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-emerald-50 dark:from-indigo-950/40 dark:to-emerald-950/40 border border-indigo-100 dark:border-indigo-900/50 rounded-xl flex items-center space-x-4">
+        <div class="text-indigo-700 dark:text-indigo-300 font-semibold text-sm">New Badge(s):</div>
+        <div class="flex flex-wrap gap-2">
           {% for b in new_badges %}
-            <div class="px-3 py-1 rounded-full bg-white shadow-sm text-sm">{{ b }}</div>
+            <div class="px-3 py-1 rounded-full bg-white dark:bg-slate-800 shadow-sm text-xs font-semibold text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">{{ b }}</div>
           {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if freeze_used %}
+      <div class="mt-4 p-3.5 bg-cyan-50 dark:bg-cyan-950/50 border border-cyan-200 dark:border-cyan-800 rounded-xl flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-cyan-500 text-white flex items-center justify-center font-bold">
+          🛡️
+        </div>
+        <div class="text-xs text-cyan-800 dark:text-cyan-200">
+          <span class="font-bold">Streak Freeze Activated!</span> Your missed practice day was shielded. Your streak is safe!
         </div>
       </div>
     {% endif %}
   </div>
 
-  {% if weak_topic %}
-  <div class="card" data-aos="fade-up">
-    <h3 class="font-semibold">Recommended remediation — weak topic: <span class="text-indigo-600">{{ weak_topic }}</span></h3>
+  <!-- LEVEL UP CELEBRATION MODAL -->
+  {% if leveled_up %}
+  <div id="levelUpModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+    <div class="relative w-full max-w-sm rounded-3xl bg-gradient-to-b from-indigo-950 via-slate-900 to-slate-950 border border-indigo-500/40 p-6 text-center text-white shadow-2xl shadow-indigo-500/30 transform transition-all">
+      <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-amber-400 to-indigo-500 flex items-center justify-center text-4xl shadow-xl shadow-amber-500/20 mb-4 animate-bounce">
+        🏆
+      </div>
+      <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 mb-2">
+        Level Up!
+      </span>
+      <h2 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-indigo-200 to-cyan-300">
+        Level {{ new_level }}
+      </h2>
+      <p class="text-sm font-semibold text-indigo-300 mt-1">
+        Title Unlocked: {{ current_user.title }}
+      </p>
+      <p class="text-xs text-slate-400 mt-2">
+        Congratulations! You've mastered new skills and unlocked a new tier rank.
+      </p>
 
-    {% if video_url %}
-      <p class="text-sm text-slate-500">Watch the recommended video fully to mark remediation complete.</p>
-
-      <div id="videoWrapper" class="mt-4">
-        <div id="player"></div>
+      <div class="my-4 p-3 bg-indigo-900/40 border border-indigo-500/30 rounded-2xl flex items-center justify-center gap-2 text-xs text-indigo-200">
+        <span>🛡️</span>
+        <span class="font-medium">+1 Streak Freeze Shield Added to Inventory</span>
       </div>
 
-      <!-- Load YouTube IFrame API (must be present once) -->
-      <script src="https://www.youtube.com/iframe_api"></script>
+      <button type="button" onclick="closeLevelUpModal()" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-bold rounded-2xl shadow-lg shadow-indigo-600/30 transition-all cursor-pointer text-sm">
+        Claim Rewards & Continue
+      </button>
+    </div>
+  </div>
+  {% endif %}
 
-      <div class="mt-4 flex items-center space-x-3">
-        <button id="continueBtn" disabled class="px-4 py-2 rounded-lg bg-slate-300 text-slate-600 cursor-not-allowed">Continue</button>
-        <div id="watchStatus" class="text-sm text-slate-500">Video not completed yet</div>
-      </div>
+  {% if incorrect_questions %}
+  <div class="card space-y-4" data-aos="fade-up">
+    <h3 class="text-xl font-bold text-slate-800">Incorrect Questions & Recommended Videos</h3>
+    <p class="text-sm text-slate-500">Review the topics you missed and watch the recommended tutorials to reinforce your understanding.</p>
 
-    {% else %}
-      <p class="text-sm text-slate-500">We couldn't find a remediation video at the moment. Your teacher will be notified.</p>
-    {% endif %}
+    <div class="space-y-4">
+      {% for item in incorrect_questions %}
+        <div class="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-100">
+              {{ item.topic }}
+            </span>
+          </div>
+          
+          <div class="text-slate-800 font-medium text-sm">{{ item.question_text }}</div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div class="p-2.5 rounded-lg bg-rose-50/50 border border-rose-100 text-rose-800">
+              <span class="font-semibold block mb-0.5">Your Answer:</span>
+              {{ item.student_answer }}
+            </div>
+            <div class="p-2.5 rounded-lg bg-emerald-50/50 border border-emerald-100 text-emerald-800">
+              <span class="font-semibold block mb-0.5">Correct Answer:</span>
+              {{ item.correct_answer }}
+            </div>
+          </div>
+
+          <div class="pt-2 space-y-2">
+            {% if item.video_url %}
+              {% set vid_id = '' %}
+              {% if 'watch?v=' in item.video_url %}
+                {% set vid_id = item.video_url.split('watch?v=')[1].split('&')[0] %}
+              {% elif 'youtu.be/' in item.video_url %}
+                {% set vid_id = item.video_url.split('youtu.be/')[1].split('?')[0] %}
+              {% endif %}
+
+              {% if vid_id %}
+                <div class="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 shadow-sm max-w-sm cursor-pointer" 
+                     onclick="openVideoModal('{{ item.video_url }}', '{{ item.topic|escape }}')">
+                  <div class="relative aspect-video w-full overflow-hidden">
+                    <img src="https://img.youtube.com/vi/{{ vid_id }}/hqdefault.jpg" alt="Video thumbnail" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100" />
+                    <div class="absolute inset-0 bg-slate-950/40 flex items-center justify-center group-hover:bg-slate-950/20 transition-colors">
+                      <div class="w-11 h-11 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-red-600 transition-all">
+                        <i data-feather="play" class="w-5 h-5 fill-current ml-0.5"></i>
+                      </div>
+                    </div>
+                    <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-slate-900/80 backdrop-blur text-[10px] font-semibold text-white">
+                      {{ item.topic }} Tutorial
+                    </div>
+                  </div>
+                </div>
+              {% else %}
+                <a href="{{ item.video_url }}" target="_blank" class="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors">
+                  <i data-feather="search" class="w-3.5 h-3.5"></i>
+                  Search Tutorial Videos
+                </a>
+              {% endif %}
+            {% else %}
+              <span class="inline-flex items-center text-xs text-slate-400 italic">No tutorial video found</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- AI Remediation Study Hub Section -->
+  {% if study_hub %}
+  <div class="card space-y-4 shadow-md rounded-2xl p-6 border border-slate-100" data-aos="fade-up">
+    <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+      <i data-feather="book-open" class="text-indigo-600 w-5 h-5"></i>
+      AI Remediation Study Hub
+    </h3>
+    <p class="text-sm text-slate-500">Targeted study summaries, glossaries, and flashcards compiled by AI for your weak topics.</p>
+    
+    <!-- Tabs for topics -->
+    <div class="border-b border-slate-200">
+      <nav class="flex space-x-4" aria-label="Tabs">
+        {% for topic in study_hub.keys() %}
+          <button onclick="switchTab(this, 'tab-{{ loop.index }}')" class="tab-btn py-2 px-3 border-b-2 font-semibold text-sm {% if loop.first %}border-indigo-600 text-indigo-600{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %} transition-all">
+            {{ topic }}
+          </button>
+        {% endfor %}
+      </nav>
+    </div>
+    
+    <div class="tab-contents mt-4">
+      {% for topic, content in study_hub.items() %}
+        <div id="tab-{{ loop.index }}" class="tab-pane {% if not loop.first %}hidden{% endif %} space-y-6">
+          
+          <!-- Summary Notes -->
+          <div class="p-4 bg-indigo-50/30 border border-indigo-100 rounded-xl space-y-2">
+            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <i data-feather="file-text" class="text-indigo-500 w-4 h-4"></i>
+              Summary Notes
+            </h4>
+            <ul class="list-disc pl-5 text-slate-600 text-xs space-y-1.5">
+              {{ content.summary|safe }}
+            </ul>
+          </div>
+          
+          <!-- Key Terms Glossary -->
+          {% if content.key_terms %}
+          <div class="space-y-2">
+            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <i data-feather="bookmark" class="text-indigo-500 w-4 h-4"></i>
+              Key Terms Glossary
+            </h4>
+            <div class="overflow-x-auto border border-slate-100 rounded-xl">
+              <table class="min-w-full divide-y divide-slate-100 text-xs">
+                <thead class="bg-slate-50">
+                  <tr>
+                    <th class="px-4 py-2 text-left font-semibold text-slate-700 w-1/3">Term</th>
+                    <th class="px-4 py-2 text-left font-semibold text-slate-700">Definition</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                  {% for term_item in content.key_terms %}
+                    <tr>
+                      <td class="px-4 py-2.5 font-bold text-indigo-700 align-top">{{ term_item.term }}</td>
+                      <td class="px-4 py-2.5 text-slate-600 align-top">{{ term_item.definition }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+          
+          <!-- Flashcards -->
+          {% if content.flashcards %}
+          <div class="space-y-3">
+            <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <i data-feather="layers" class="text-indigo-500 w-4 h-4"></i>
+              Interactive Study Flashcards
+            </h4>
+            <p class="text-xs text-slate-400">Click a card to flip it and reveal the explanation.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {% for fc in content.flashcards %}
+                <div class="flashcard-container" onclick="this.querySelector('.flashcard').classList.toggle('flipped')">
+                  <div class="flashcard">
+                    <div class="flashcard-front">
+                      <span class="text-xs font-bold text-indigo-500 mb-2 uppercase tracking-wider">Concept / Question</span>
+                      <p class="text-slate-800 font-semibold text-xs leading-relaxed">{{ fc.front }}</p>
+                      <span class="text-[10px] text-slate-400 mt-auto flex items-center gap-1">
+                        <i data-feather="refresh-cw" class="w-3 h-3"></i> Flip Card
+                      </span>
+                    </div>
+                    <div class="flashcard-back">
+                      <span class="text-xs font-bold text-indigo-200 mb-2 uppercase tracking-wider">Explanation</span>
+                      <p class="text-white text-xs leading-relaxed font-medium">{{ fc.back }}</p>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="card text-center py-8" data-aos="fade-up">
+    <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+      <i data-feather="check" class="text-emerald-600 w-6 h-6"></i>
+    </div>
+    <h3 class="text-lg font-bold text-slate-800">Perfect Score!</h3>
+    <p class="text-sm text-slate-500 mt-1">Excellent work! You answered all questions correctly.</p>
   </div>
   {% endif %}
 
@@ -60,175 +252,112 @@
   </div>
 
 </div>
+
+<!-- Embedded Video Modal -->
+<div id="videoModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+    <div class="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+      <div class="flex items-center gap-2">
+        <i data-feather="youtube" class="text-red-500 w-5 h-5"></i>
+        <h4 id="videoModalTitle" class="font-bold text-sm text-slate-100">Tutorial Video</h4>
+      </div>
+      <button onclick="closeVideoModal()" class="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-800 cursor-pointer">
+        <i data-feather="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div class="relative w-full pb-[56.25%] bg-black">
+      <iframe id="videoIframe" class="absolute top-0 left-0 w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+    <div class="p-3 bg-slate-50 flex items-center justify-between text-xs text-slate-500 border-t border-slate-100">
+      <span>AI-recommended video for your weak topic</span>
+      <a id="videoModalExternalLink" href="#" target="_blank" class="text-indigo-600 hover:underline font-medium flex items-center gap-1">
+        Open in YouTube <i data-feather="external-link" class="w-3 h-3"></i>
+      </a>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block body_extra %}
 <script>
-  // Celebrate confetti if new badges
-  document.addEventListener('DOMContentLoaded', function(){
-    const newBadges = {{ new_badges|tojson or '[]' }};
-    if(newBadges && newBadges.length){
-      setTimeout(()=>{ celebrate(); }, 400);
+  // Open video modal
+  function openVideoModal(url, topic) {
+    let videoId = '';
+    if (url.includes('watch?v=')) {
+      videoId = url.split('watch?v=')[1].split('&')[0];
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1].split('?')[0];
     }
-  });
-</script>
-
-{% if video_url %}
-<script>
-/*
- Robust YouTube player loader
- - Ensures iframe API is loaded only once
- - Waits for API ready event, then creates player
- - Avoids duplicate players and race conditions
-*/
-
-// Safe video URL from server
-const __videoUrl = {{ video_url|tojson }};
-function extractVideoId(u){
-  if(!u) return null;
-  const m = u.match(/[?&]v=([^&]+)/);
-  if(m) return m[1];
-  const m2 = u.match(/youtu\.be\/([^?&]+)/);
-  if(m2) return m2[1];
-  return null;
-}
-const __videoId = extractVideoId(__videoUrl);
-
-// debug helper
-function log(...args){ try { console.log('[YT-PLAYER]', ...args); } catch(e){} }
-
-if(!__videoId){
-  log('No videoId found, skipping player creation.');
-} else {
-  // Promise to ensure YT is ready
-  function ensureYouTubeIframeAPI(){
-    // if already available and ready
-    if(window.YT && window.YT.Player){
-      log('YT already ready');
-      return Promise.resolve(window.YT);
+    
+    const iframe = document.getElementById('videoIframe');
+    const modal = document.getElementById('videoModal');
+    const title = document.getElementById('videoModalTitle');
+    const extLink = document.getElementById('videoModalExternalLink');
+    
+    if (videoId) {
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    } else {
+      iframe.src = url;
     }
-
-    // if a promise already exists (another call in progress), return it
-    if(window.__ytApiReadyPromise){
-      log('Using existing YT promise');
-      return window.__ytApiReadyPromise;
-    }
-
-    // create a promise and store it globally so other calls reuse it
-    window.__ytApiReadyPromise = new Promise((resolve, reject) => {
-      // create global callback that YouTube API will call
-      const prev = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = function(){
-        log('onYouTubeIframeAPIReady fired');
-        if (typeof prev === 'function') {
-          try { prev(); } catch(e){ console.error(e); }
-        }
-        resolve(window.YT);
-      };
-
-      // inject script if not present
-      if(!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')){
-        const tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        tag.async = true;
-        tag.onerror = function(e){
-          console.error('YT iframe API failed to load', e);
-          reject(new Error('YT API load error'));
-        };
-        document.head.appendChild(tag);
-        log('YT iframe_api script injected');
-      } else {
-        log('YT iframe_api script already present, waiting for ready callback');
-        // If script present but onYouTubeIframeAPIReady won't be called (rare),
-        // attempt to poll for window.YT.Player as a fallback:
-        const poll = setInterval(() => {
-          if(window.YT && window.YT.Player){
-            clearInterval(poll);
-            resolve(window.YT);
-          }
-        }, 200);
-        // safety timeout
-        setTimeout(() => {
-          clearInterval(poll);
-          if(window.YT && window.YT.Player){
-            resolve(window.YT);
-          } else {
-            reject(new Error('YT API not ready after timeout'));
-          }
-        }, 8000);
-      }
-    });
-
-    return window.__ytApiReadyPromise;
+    title.textContent = topic ? `Tutorial: ${topic}` : 'Tutorial Video';
+    extLink.href = url;
+    modal.classList.remove('hidden');
+    try { feather.replace(); } catch(e){}
   }
 
-  // create the player once API ready
-  ensureYouTubeIframeAPI().then((YT) => {
-    // guard: don't create twice
-    if(window.__playerCreated){
-      log('Player already created; skipping creation.');
-      return;
-    }
-    window.__playerCreated = true;
+  // Close video modal
+  function closeVideoModal() {
+    const iframe = document.getElementById('videoIframe');
+    const modal = document.getElementById('videoModal');
+    iframe.src = '';
+    modal.classList.add('hidden');
+  }
 
-    log('Creating YT.Player for videoId:', __videoId);
-    window.__player = new YT.Player('player', {
-      height: '390',
-      width: '700',
-      videoId: __videoId,
-      playerVars: {
-        'controls': 1,
-        'modestbranding': 1,
-        'rel': 0,
-        'fs': 1
-      },
-      events: {
-        'onStateChange': function(event){
-          log('YT state changed:', event.data);
-          if(event.data === YT.PlayerState.ENDED){
-            log('Video ended — marking watched');
-            // ensure single mark
-            if(!window.__watched){
-              window.__watched = true;
-              fetch("{{ url_for('mark_video_watched', attempt_id=attempt.id) }}", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ watched: true })
-              }).then(r => r.json()).then(data => {
-                document.getElementById('watchStatus').innerText = "Video completed — remediation marked!";
-                const btn = document.getElementById('continueBtn');
-                btn.disabled = false;
-                btn.classList.remove('bg-slate-300','cursor-not-allowed');
-                btn.classList.add('bg-indigo-600','text-white');
-                try { celebrate(); } catch(e){ log('celebrate not defined'); }
-              }).catch(err => {
-                console.error("mark watched failed", err);
-                document.getElementById('watchStatus').innerText = "Completed locally — network error saving status.";
-              });
-            }
-          }
-        }
-      }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeVideoModal();
+  });
+
+  // Celebrate confetti and sound effects if high score, new badges, or level up
+  document.addEventListener('DOMContentLoaded', function(){
+    const scoreVal = {{ score or 0 }};
+    const isLeveledUp = {{ 'true' if leveled_up else 'false' }};
+    const newBadges = {{ new_badges|tojson or '[]' }};
+
+    if (isLeveledUp) {
+      setTimeout(() => {
+        playLevelUpSound();
+        celebrate(true);
+      }, 300);
+    } else if (scoreVal >= 80 || (newBadges && newBadges.length)) {
+      setTimeout(() => {
+        playVictoryChime();
+        celebrate(false);
+      }, 350);
+    }
+  });
+
+  function closeLevelUpModal() {
+    const modal = document.getElementById('levelUpModal');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+  }
+
+  // Switch tabs in AI Study Hub
+  function switchTab(btn, tabId) {
+    const container = btn.closest('.card');
+    const tabs = container.querySelectorAll('.tab-btn');
+    const panes = container.querySelectorAll('.tab-pane');
+    
+    tabs.forEach(t => {
+      t.className = 'tab-btn py-2 px-3 border-b-2 font-semibold text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all';
     });
-  }).catch(err => {
-    console.error('YT API ready failed:', err);
-    document.getElementById('watchStatus').innerText = "Video player failed to load. Please disable extensions or try again.";
-  });
+    panes.forEach(p => p.classList.add('hidden'));
+    
+    btn.className = 'tab-btn py-2 px-3 border-b-2 font-semibold text-sm border-indigo-600 text-indigo-600 transition-all';
+    document.getElementById(tabId).classList.remove('hidden');
+    try { feather.replace(); } catch(e){}
+  }
 
-  // continue button handler
-  document.addEventListener('DOMContentLoaded', ()=>{
-    const btn = document.getElementById('continueBtn');
-    if(btn){
-      btn.addEventListener('click', ()=>{
-        if(!window.__watched){
-          alert("Please watch the full video to continue remediation.");
-          return;
-        }
-        window.location.href = "{{ url_for('student_dashboard') }}";
-      });
-    }
-  });
-}
 </script>
-{% endif %}
 {% endblock %}

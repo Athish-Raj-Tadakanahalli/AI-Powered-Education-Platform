@@ -1,0 +1,23 @@
+{
+  "appId": "com.aieducation.assessment",
+  "appName": "AI Education App",
+  "webDir": "app/static",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "backgroundColor": "#1a1a2e",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP"
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#1a1a2e"
+    }
+  }
+}

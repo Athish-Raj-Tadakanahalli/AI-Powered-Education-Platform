@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}Teacher - Attendance Manager{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8">
+  <!-- Header Card -->
+  <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4" data-aos="fade-up">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xl">📅</span>
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Attendance Management</h2>
+      </div>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Select class, subject, and date to mark or view attendance history.</p>
+    </div>
+    <div>
+      <a href="{{ url_for('teacher_dashboard') }}" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-xl text-sm transition-colors">
+        ← Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Section 1: Mark Attendance Panel -->
+  <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6" data-aos="fade-up">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+      <div>
+        <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Mark Attendance</h3>
+        <p class="text-xs text-slate-500">Record daily student presence for your subjects</p>
+      </div>
+
+      <!-- Subject & Date Selection Form (GET) -->
+      <form method="GET" action="{{ url_for('teacher_attendance') }}" class="flex flex-wrap items-center gap-3">
+        <div>
+          <label class="sr-only">Subject</label>
+          <select name="subject_id" onchange="this.form.submit()" class="px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 font-medium focus:ring-2 focus:ring-indigo-500">
+            {% for s in subjects %}
+              <option value="{{ s.id }}" {% if selected_subject and selected_subject.id == s.id %}selected{% endif %}>
+                {{ s.name }} {% if s.class_year %} ({{ s.class_year }}){% endif %}
+              </option>
+            {% else %}
+              <option value="">No Subjects Assigned</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="sr-only">Date</label>
+          <input type="date" name="date" value="{{ selected_date }}" onchange="this.form.submit()" class="px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 font-medium focus:ring-2 focus:ring-indigo-500">
+        </div>
+      </form>
+    </div>
+
+    {% if selected_subject %}
+      <form method="POST" action="{{ url_for('teacher_attendance') }}" class="space-y-6">
+        <input type="hidden" name="subject_id" value="{{ selected_subject.id }}">
+        <input type="hidden" name="date" value="{{ selected_date }}">
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div>
+            <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">Selected:</span>
+            <span class="text-sm text-indigo-600 dark:text-indigo-400 font-bold ml-1">{{ selected_subject.name }}</span>
+            {% if selected_subject.class_year or selected_subject.semester %}
+              <span class="text-xs text-slate-400 ml-2">({{ selected_subject.class_year or '' }} {{ selected_subject.semester or '' }})</span>
+            {% endif %}
+            <span class="text-xs text-slate-400 ml-3">Date: <strong class="text-slate-700 dark:text-slate-300">{{ selected_date }}</strong></span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="markAllPresent()" class="px-3.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-lg border border-emerald-500/20 transition-colors flex items-center gap-1.5">
+              <span>✓</span> Mark All Present
+            </button>
+            <button type="button" onclick="markAllAbsent()" class="px-3.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold rounded-lg border border-rose-500/20 transition-colors flex items-center gap-1.5">
+              <span>✗</span> Mark All Absent
+            </button>
+          </div>
+        </div>
+
+        {% if enrolled_students %}
+          <div class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800">
+            <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+              <thead class="bg-slate-50 dark:bg-slate-800/80 text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200/80 dark:border-slate-800">
+                <tr>
+                  <th class="px-4 py-3">#</th>
+                  <th class="px-4 py-3">Student Name</th>
+                  <th class="px-4 py-3">Class / Year</th>
+                  <th class="px-4 py-3 text-center">Attendance Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                {% for st in enrolled_students %}
+                  {% set current_status = attendance_map.get(st.id, 'Present') %}
+                  <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                    <td class="px-4 py-3 font-medium text-slate-400 text-xs">{{ loop.index }}</td>
+                    <td class="px-4 py-3">
+                      <div class="font-semibold text-slate-800 dark:text-slate-100">{{ st.full_name or st.username }}</div>
+                      <div class="text-xs text-slate-400">@{{ st.username }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-slate-500">
+                      {{ st.class_year or 'N/A' }} {% if st.semester %}• {{ st.semester }}{% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex items-center justify-center gap-6">
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                          <input type="radio" name="status_{{ st.id }}" value="Present" class="attendance-radio status-present w-4 h-4 text-emerald-600 focus:ring-emerald-500" {% if current_status == 'Present' %}checked{% endif %}>
+                          Present
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-rose-600 dark:text-rose-400">
+                          <input type="radio" name="status_{{ st.id }}" value="Absent" class="attendance-radio status-absent w-4 h-4 text-rose-600 focus:ring-rose-500" {% if current_status == 'Absent' %}checked{% endif %}>
+                          Absent
+                        </label>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex justify-end pt-2">
+            <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md transition-colors flex items-center gap-2">
+              <span>💾</span> Save Attendance
+            </button>
+          </div>
+        {% else %}
+          <div class="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-xl text-slate-500">
+            No enrolled students found matching this subject's class criteria.
+          </div>
+        {% endif %}
+      </form>
+    {% else %}
+      <div class="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-xl text-slate-500">
+        Please select a subject to mark attendance.
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Section 2: Attendance Records & Filter History -->
+  <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6" data-aos="fade-up">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+      <div>
+        <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Attendance Log & History</h3>
+        <p class="text-xs text-slate-500">Filter and review previous attendance submissions</p>
+      </div>
+
+      <!-- Filter Form -->
+      <form method="GET" action="{{ url_for('teacher_attendance') }}" class="flex flex-wrap items-center gap-2">
+        {% if selected_subject %}
+          <input type="hidden" name="subject_id" value="{{ selected_subject.id }}">
+          <input type="hidden" name="date" value="{{ selected_date }}">
+        {% endif %}
+
+        <!-- Filter Subject -->
+        <select name="filter_subject_id" class="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300">
+          <option value="">All Subjects</option>
+          {% for s in subjects %}
+            <option value="{{ s.id }}" {% if filter_subject_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+
+        <!-- Filter Date -->
+        <input type="date" name="filter_date" value="{{ filter_date or '' }}" placeholder="Filter Date" class="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300">
+
+        <!-- Filter Student -->
+        <select name="filter_student_id" class="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300">
+          <option value="">All Students</option>
+          {% for st in all_students %}
+            <option value="{{ st.id }}" {% if filter_student_id == st.id %}selected{% endif %}>{{ st.full_name or st.username }}</option>
+          {% endfor %}
+        </select>
+
+        <!-- Filter Status -->
+        <select name="filter_status" class="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300">
+          <option value="">All Statuses</option>
+          <option value="Present" {% if filter_status == 'Present' %}selected{% endif %}>Present</option>
+          <option value="Absent" {% if filter_status == 'Absent' %}selected{% endif %}>Absent</option>
+        </select>
+
+        <button type="submit" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+          Filter
+        </button>
+
+        {% if filter_date or filter_student_id or filter_status or filter_subject_id %}
+          <a href="{{ url_for('teacher_attendance', subject_id=selected_subject.id if selected_subject else '', date=selected_date) }}" class="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg hover:bg-slate-300 transition-colors">
+            Reset
+          </a>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- History Table -->
+    {% if history_records %}
+      <div class="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-800">
+        <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+          <thead class="bg-slate-50 dark:bg-slate-800/80 text-xs uppercase text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200/80 dark:border-slate-800">
+            <tr>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Student Name</th>
+              <th class="px-4 py-3">Subject</th>
+              <th class="px-4 py-3">Class</th>
+              <th class="px-4 py-3 text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+            {% for rec in history_records %}
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                <td class="px-4 py-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  {{ rec.date.strftime('%Y-%m-%d') }}
+                </td>
+                <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">
+                  {{ rec.student.full_name or rec.student.username }}
+                </td>
+                <td class="px-4 py-3 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                  {{ rec.subject.name }}
+                </td>
+                <td class="px-4 py-3 text-xs text-slate-500">
+                  {{ rec.student.class_year or 'N/A' }}
+                </td>
+                <td class="px-4 py-3 text-center">
+                  {% if rec.status == 'Present' %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      ✓ Present
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                      ✗ Absent
+                    </span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="text-xs text-slate-400 text-right">
+        Total Records Found: {{ history_records|length }}
+      </div>
+    {% else %}
+      <div class="p-8 text-center bg-slate-50 dark:bg-slate-800/40 rounded-xl text-slate-500 text-sm">
+        No attendance records found matching the specified filters.
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  function markAllPresent() {
+    const presentRadios = document.querySelectorAll('.status-present');
+    presentRadios.forEach(radio => {
+      radio.checked = true;
+    });
+  }
+
+  function markAllAbsent() {
+    const absentRadios = document.querySelectorAll('.status-absent');
+    absentRadios.forEach(radio => {
+      radio.checked = true;
+    });
+  }
+</script>
+{% endblock %}

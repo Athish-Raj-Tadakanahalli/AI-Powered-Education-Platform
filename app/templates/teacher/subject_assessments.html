@@ -7,7 +7,13 @@
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-lg font-semibold">Assessments for {{ subject.name }}</h2>
-        <div class="text-sm text-slate-400">Class: {{ subject.class_year or 'N/A' }} • Semester: {{ subject.semester or 'N/A' }}</div>
+        {% if subject.class_year or subject.semester %}
+          <div class="text-sm text-slate-400">
+            {% if subject.class_year %}Course: {{ subject.class_year }}{% endif %}
+            {% if subject.class_year and subject.semester %} • {% endif %}
+            {% if subject.semester %}Semester: {{ subject.semester }}{% endif %}
+          </div>
+        {% endif %}
       </div>
       <div>
         <a href="{{ url_for('create_assessment') }}" class="px-3 py-2 bg-indigo-600 text-white rounded">Create New</a>

@@ -1,0 +1,25 @@
+{
+  "short_name": "AI Edu App",
+  "name": "AI Education & Assessment Platform",
+  "description": "AI-powered learning, proctored assessments, gamification, and personalized remediation app.",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "categories": ["education", "productivity"]
+}

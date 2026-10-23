@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Cyan glow filter for eyes -->
+    <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Head subtle gradient -->
+    <linearGradient id="headGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+
+    <!-- Visor gradient -->
+    <linearGradient id="visorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#091322" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+
+    <!-- Cyan eye gradient -->
+    <linearGradient id="eyeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#00E5FF" />
+    </linearGradient>
+  </defs>
+
+  <!-- Top Antenna -->
+  <g class="bot-antenna">
+    <circle cx="60" cy="16" r="6" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" />
+    <rect x="57" y="21" width="6" height="11" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" />
+  </g>
+
+  <!-- Left & Right Ear Nubs -->
+  <rect x="13" y="46" width="10" height="28" rx="5" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1.5" />
+  <rect x="97" y="46" width="10" height="28" rx="5" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1.5" />
+
+  <!-- Main Head Body with Speech Bubble Pointer -->
+  <path d="M 60 28 C 84 28 100 41 100 60 C 100 78 84 89 60 89 C 55 89 49.5 88 45.5 86.2 L 45.5 98 L 34 86 C 25 80.5 20 71 20 60 C 20 41 36 28 60 28 Z"
+        fill="url(#headGrad)"
+        stroke="#CBD5E1"
+        stroke-width="1.5"
+        stroke-linejoin="round" />
+
+  <!-- Inner Dark Visor Screen -->
+  <rect x="28" y="40" width="64" height="38" rx="19" fill="url(#visorGrad)" stroke="#1E293B" stroke-width="1.5" />
+
+  <!-- Visor Subtle Diagonal Gloss -->
+  <path d="M 28 59 C 28 48.5 36.5 40 47 40 L 73 40 C 83.5 40 92 48.5 92 59 C 92 50 82 44 60 44 C 38 44 28 50 28 59 Z"
+        fill="#FFFFFF"
+        fill-opacity="0.08" />
+
+  <!-- Left Glowing Eye with Natural Blink Animation -->
+  <g class="bot-eye-left">
+    <ellipse cx="46" cy="59" rx="6.5" ry="6.5" fill="url(#eyeGrad)" filter="url(#eyeGlow)">
+      <animate attributeName="ry" values="6.5;6.5;0.8;6.5;6.5" keyTimes="0;0.92;0.95;0.98;1" dur="4s" repeatCount="indefinite" />
+    </ellipse>
+    <circle cx="48" cy="57" r="2" fill="#FFFFFF" opacity="0.9">
+      <animate attributeName="opacity" values="0.9;0.9;0;0.9;0.9" keyTimes="0;0.92;0.95;0.98;1" dur="4s" repeatCount="indefinite" />
+    </circle>
+  </g>
+
+  <!-- Right Glowing Eye with Natural Blink Animation -->
+  <g class="bot-eye-right">
+    <ellipse cx="74" cy="59" rx="6.5" ry="6.5" fill="url(#eyeGrad)" filter="url(#eyeGlow)">
+      <animate attributeName="ry" values="6.5;6.5;0.8;6.5;6.5" keyTimes="0;0.92;0.95;0.98;1" dur="4s" repeatCount="indefinite" />
+    </ellipse>
+    <circle cx="76" cy="57" r="2" fill="#FFFFFF" opacity="0.9">
+      <animate attributeName="opacity" values="0.9;0.9;0;0.9;0.9" keyTimes="0;0.92;0.95;0.98;1" dur="4s" repeatCount="indefinite" />
+    </circle>
+  </g>
+</svg>

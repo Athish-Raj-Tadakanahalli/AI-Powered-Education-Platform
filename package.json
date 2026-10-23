@@ -1,0 +1,35 @@
+{
+  "name": "ai-education-assessment-mobile",
+  "version": "1.0.0",
+  "description": "AI-Powered Education & Assessment Mobile App",
+  "main": "run.py",
+  "scripts": {
+    "start": "python run.py",
+    "cap:init": "npx cap init",
+    "cap:add:android": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:copy": "npx cap copy"
+  },
+  "keywords": [
+    "education",
+    "assessment",
+    "mobile",
+    "capacitor",
+    "pwa",
+    "flask"
+  ],
+  "author": "Athish Raj Tadakanahalli",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/camera": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/network": "^7.0.0",
+    "@capacitor/preferences": "^7.0.0",
+    "@capacitor/splash-screen": "^7.0.0",
+    "@capacitor/status-bar": "^7.0.0"
+  }
+}

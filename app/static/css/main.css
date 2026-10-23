@@ -6,7 +6,7 @@
 
 /* Card glass effect */
 .card {
-  @apply bg-white/80 backdrop-blur-md rounded-2xl shadow-md border border-slate-100;
+  @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-md border border-slate-100 dark:border-slate-800/80;
 }
 
 /* Progress gradient */
@@ -69,10 +69,7 @@
 
 /* utility to visually emphasize topic chips */
 .topic-chip {
-  @apply inline-block text-xs px-2 py-1 rounded-full border;
-  border-color: rgba(99,102,241,0.12);
-  background: linear-gradient(90deg, rgba(99,102,241,0.06), rgba(6,182,212,0.03));
-  color: #374151;
+  @apply inline-block text-xs px-2 py-1 rounded-full border border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60;
 }
 
 /* nice radio style enhancement */
@@ -82,3 +79,382 @@ input[type="radio"] {
 
 /* safety: ensure animations don't disrupt function */
 * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* Interactive 3D Flipping Flashcard Styles */
+.flashcard-container {
+  perspective: 1000px;
+  cursor: pointer;
+  height: 180px;
+}
+.flashcard {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+}
+.flashcard.flipped {
+  transform: rotateY(180deg);
+}
+.flashcard-front, .flashcard-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.flashcard-front {
+  @apply bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800;
+}
+.flashcard-back {
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+  color: #ffffff;
+  transform: rotateY(180deg);
+  border: 1px solid #4338ca;
+  overflow-y: auto;
+}
+
+/* Ambient glow & mesh background */
+.ambient-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 600px;
+  background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.12), rgba(6, 182, 212, 0.05) 50%, transparent 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Badge Gloss Sheen Animation */
+.badge-gloss {
+  position: relative;
+  overflow: hidden;
+}
+.badge-gloss::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(60deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform: rotate(30deg);
+  transition: transform 0.8s;
+}
+.badge-gloss:hover::after {
+  transform: rotate(30deg) translate(100%, 100%);
+}
+
+/* Leaderboard Podium Styles */
+.podium-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2.25rem 0.25rem 0.5rem;
+}
+@media (min-width: 640px) {
+  .podium-container {
+    gap: 1.25rem;
+    padding: 2.5rem 0.5rem 0.5rem;
+  }
+}
+.podium-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 1.25rem 1.25rem 0.75rem 0.75rem;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.podium-step:hover {
+  transform: translateY(-6px);
+}
+.podium-1st {
+  min-height: 260px;
+  background: linear-gradient(180deg, rgba(254, 240, 138, 0.35) 0%, rgba(245, 158, 11, 0.15) 100%);
+  border: 2px solid #f59e0b;
+}
+.podium-2nd {
+  min-height: 225px;
+  background: linear-gradient(180deg, rgba(226, 232, 240, 0.55) 0%, rgba(148, 163, 184, 0.2) 100%);
+  border: 2px solid #94a3b8;
+}
+.podium-3rd {
+  min-height: 195px;
+  background: linear-gradient(180deg, rgba(254, 215, 170, 0.45) 0%, rgba(217, 119, 6, 0.18) 100%);
+  border: 2px solid #d97706;
+}
+
+/* Pulsing Live Proctor Dot */
+@keyframes pulseLive {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+.live-pulse {
+  animation: pulseLive 2s infinite;
+}
+
+/* --- University Portal Dedicated Styles --- */
+.uni-portal-bg {
+  background: radial-gradient(1000px 600px at 15% 10%, rgba(79, 70, 229, 0.08), transparent 75%),
+              radial-gradient(800px 500px at 85% 85%, rgba(14, 165, 233, 0.08), transparent 75%),
+              linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 1) 100%);
+}
+.dark .uni-portal-bg {
+  background: radial-gradient(1000px 600px at 15% 10%, rgba(99, 102, 241, 0.15), transparent 75%),
+              radial-gradient(800px 500px at 85% 85%, rgba(14, 165, 233, 0.12), transparent 75%),
+              linear-gradient(180deg, rgba(15, 23, 42, 1) 0%, rgba(2, 6, 23, 1) 100%);
+}
+
+.glass-panel-hero {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.08);
+}
+.dark .glass-panel-hero {
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
+.glass-card-auth {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.05);
+}
+.dark .glass-card-auth {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.15);
+}
+
+/* University Role Selector Tabs */
+.role-tab-btn {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.role-tab-btn.active {
+  background-color: #ffffff;
+  color: #4f46e5;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+  font-weight: 600;
+}
+.dark .role-tab-btn.active {
+  background-color: #334155;
+  color: #818cf8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Input Focus Glow */
+.uni-input {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.uni-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  outline: none;
+}
+
+/* Announcement Ticker */
+.ticker-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ticker-content {
+  display: inline-block;
+  animation: tickerMove 28s linear infinite;
+}
+.ticker-wrap:hover .ticker-content {
+  animation-play-state: paused;
+}
+@keyframes tickerMove {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+/* ==========================================================================
+   REACT BITS UI ANIMATION ENHANCEMENTS
+   ========================================================================== */
+
+/* Aurora Background Canvas */
+#reactbits-aurora {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+  transition: opacity 0.5s ease;
+}
+
+/* React Bits: Shiny Text Shimmer Effect */
+.reactbits-shiny-text {
+  background: linear-gradient(
+    110deg,
+    #4f46e5 0%,
+    #818cf8 25%,
+    #38bdf8 50%,
+    #818cf8 75%,
+    #4f46e5 100%
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: reactbitsShimmer 4s linear infinite;
+}
+
+.dark .reactbits-shiny-text {
+  background: linear-gradient(
+    110deg,
+    #a5b4fc 0%,
+    #ffffff 30%,
+    #38bdf8 50%,
+    #ffffff 70%,
+    #a5b4fc 100%
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@keyframes reactbitsShimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* React Bits: Spotlight Card Glow Effect */
+.reactbits-spotlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.reactbits-spotlight::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: radial-gradient(
+    650px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(99, 102, 241, 0.45),
+    rgba(56, 189, 248, 0.15) 40%,
+    transparent 80%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.reactbits-spotlight:hover::before {
+  opacity: 1;
+}
+
+/* Subtle Spotlight Inner Background Radial Glow */
+.reactbits-spotlight::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(99, 102, 241, 0.06),
+    transparent 70%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.reactbits-spotlight:hover::after {
+  opacity: 1;
+}
+
+/* React Bits: 3D Tilt Card Perspective */
+.reactbits-tilt-container {
+  perspective: 1200px;
+}
+
+.reactbits-tilt-card {
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* React Bits: Magnet Button */
+.reactbits-magnet-btn {
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease, background-color 0.2s ease;
+  will-change: transform;
+}
+
+/* React Bits: Glow Border Focus Input */
+.reactbits-glow-input {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.reactbits-glow-input:focus-within {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 0 20px rgba(99, 102, 241, 0.15);
+  border-color: #6366f1;
+}
+
+/* ChatBot Floating & Pulse Animations */
+@keyframes botFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(-1.5deg);
+  }
+}
+
+.animate-bot-float {
+  animation: botFloat 3.6s ease-in-out infinite;
+}
+
+@keyframes botPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.5), 0 0 40px rgba(99, 102, 241, 0.2);
+  }
+}
+
+.animate-bot-glow {
+  animation: botPulseGlow 3s ease-in-out infinite;
+}
+
+
+
+

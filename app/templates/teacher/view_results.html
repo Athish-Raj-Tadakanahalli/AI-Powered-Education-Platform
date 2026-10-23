@@ -9,6 +9,16 @@
         <h2 class="text-xl font-semibold">Results — {{ assessment.title }}</h2>
         <div class="text-sm text-slate-400">Subject: {{ assessment.subject.name }}</div>
       </div>
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('export_assessment_csv', assessment_id=assessment.id) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors">
+          <i data-feather="download" class="w-3.5 h-3.5"></i>
+          Export Gradebook (CSV)
+        </a>
+        <a href="{{ url_for('report_assessment_print', assessment_id=assessment.id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors">
+          <i data-feather="printer" class="w-3.5 h-3.5"></i>
+          Print Class Report
+        </a>
+      </div>
     </div>
 
     <div class="mt-4 grid md:grid-cols-2 gap-4">
@@ -16,17 +26,18 @@
         <h4 class="font-semibold">Student Results</h4>
         <ul class="mt-2 space-y-2">
           {% for att in attempts %}
-            <li class="p-3 bg-gray-50 rounded flex justify-between items-center">
-              <div>
-                <div class="font-medium">{{ att.student.full_name or att.student.username }}</div>
-                <div class="text-xs text-slate-400">Score: {{ att.score }}% • Watched: {{ 'Yes' if att.watched_video_for_weak_topic else 'No' }}</div>
-              </div>
-              <div class="text-right">
-                <!-- <a href="{{ url_for('student_dashboard') }}" class="text-indigo-600 hover:underline text-sm">Open student</a> -->
-              </div>
-            </li>
+          <li class="p-3 bg-gray-50 rounded flex justify-between items-center">
+            <div>
+              <div class="font-medium">{{ att.student.full_name or att.student.username }}</div>
+              <div class="text-xs text-slate-400">Score: {{ att.score }}% • Watched: {{ 'Yes' if
+                att.watched_video_for_weak_topic else 'No' }}</div>
+            </div>
+            <div class="text-right">
+              <!-- <a href="{{ url_for('student_dashboard') }}" class="text-indigo-600 hover:underline text-sm">Open student</a> -->
+            </div>
+          </li>
           {% else %}
-            <div class="text-sm text-slate-400">No attempts yet.</div>
+          <div class="text-sm text-slate-400">No attempts yet.</div>
           {% endfor %}
         </ul>
       </div>
@@ -45,8 +56,8 @@
 
 {% block body_extra %}
 <script>
-  const topicLabels = {{ topic_percent.keys()|list|tojson }};
-  const topicValues = {{ topic_percent.values()|list|tojson }};
+  const topicLabels = {{ topic_percent.keys() | list | tojson }};
+  const topicValues = {{ topic_percent.values() | list | tojson }};
 
   const ctx = document.getElementById('topicChart').getContext('2d');
   new Chart(ctx, {
@@ -55,7 +66,7 @@
       labels: topicLabels,
       datasets: [{ label: 'Avg Correct %', data: topicValues }]
     },
-    options: { scales: { y: { beginAtZero: true, max:100 } } }
+    options: { scales: { y: { beginAtZero: true, max: 100 } } }
   });
 </script>
 {% endblock %}

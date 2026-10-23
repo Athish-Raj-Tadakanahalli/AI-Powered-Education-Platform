@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Student Account Requests — Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+  <!-- Header Card with Breadcrumbs & Back Button -->
+  <div class="card" data-aos="fade-up">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-medium text-slate-400 mb-1">
+          <a href="{{ url_for('admin_dashboard') }}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Admin Dashboard</a>
+          <span>/</span>
+          <span class="text-slate-600 dark:text-slate-300">Pending Requests</span>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+          Student Account Requests
+          <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold {% if pending_students %}bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 animate-pulse{% else %}bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400{% endif %}">
+            {{ pending_students|length }} Pending
+          </span>
+        </h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Review and approve self-registration requests submitted by students.</p>
+      </div>
+
+      <div class="flex items-center gap-2.5 self-start sm:self-center">
+        {% if pending_students %}
+        <form method="post" action="{{ url_for('admin_approve_all_students') }}" onsubmit="return confirm('Are you sure you want to approve all {{ pending_students|length }} pending students?');">
+          <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
+            <i data-feather="check-circle" class="w-3.5 h-3.5"></i>
+            Approve All ({{ pending_students|length }})
+          </button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('admin_dashboard') }}" class="px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5">
+          <i data-feather="arrow-left" class="w-3.5 h-3.5"></i>
+          Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filters Card -->
+  <div class="card" data-aos="fade-up">
+    <form method="get" action="{{ url_for('admin_pending_requests') }}" class="flex flex-wrap items-end gap-3">
+      <!-- Search input -->
+      <div class="flex-1 min-w-[200px]">
+        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Search Student</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <i data-feather="search" class="w-4 h-4"></i>
+          </div>
+          <input type="text"
+                 name="q"
+                 value="{{ search_query or '' }}"
+                 placeholder="Search by name, username, or email..."
+                 class="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-xs">
+        </div>
+      </div>
+
+      <!-- Course Filter -->
+      {% if distinct_classes %}
+      <div class="w-36">
+        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Course</label>
+        <select name="class_year" class="w-full p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-xs">
+          <option value="">All Courses</option>
+          {% for c in distinct_classes %}
+            <option value="{{ c }}" {% if selected_class == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      <!-- Semester Filter -->
+      {% if distinct_sem %}
+      <div class="w-36">
+        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Semester</label>
+        <select name="semester" class="w-full p-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-xs">
+          <option value="">All Semesters</option>
+          {% for s in distinct_sem %}
+            <option value="{{ s }}" {% if selected_sem == s %}selected{% endif %}>Sem {{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      <div class="flex items-center gap-2">
+        <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer">
+          Filter
+        </button>
+        {% if search_query or selected_class or selected_sem %}
+        <a href="{{ url_for('admin_pending_requests') }}" class="px-3 py-2 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+          Clear
+        </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Pending Requests List -->
+  <div class="card" data-aos="fade-up">
+    {% if pending_students %}
+      <div class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for p in pending_students %}
+        <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 px-2 rounded-xl transition-colors">
+          
+          <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+              {{ (p.full_name or p.username)[0]|upper }}
+            </div>
+            <div>
+              <div class="font-semibold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
+                {{ p.full_name or p.username }}
+                <span class="text-xs font-normal text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">@{{ p.username }}</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {% if p.class_year %}
+                <span class="px-2.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-medium">
+                  Course: {{ p.class_year }}
+                </span>
+                {% endif %}
+                {% if p.semester %}
+                <span class="px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 font-medium text-slate-700 dark:text-slate-300">
+                  Semester {{ p.semester }}
+                </span>
+                {% endif %}
+                {% if p.email %}
+                <span class="text-slate-400 flex items-center gap-1">
+                  <i data-feather="mail" class="w-3 h-3"></i>
+                  {{ p.email }}
+                </span>
+                {% endif %}
+                <span class="text-[11px] text-slate-400 flex items-center gap-1">
+                  <i data-feather="clock" class="w-3 h-3"></i>
+                  Requested: {{ p.created_at.strftime('%b %d, %Y at %H:%M') if p.created_at else 'Recent' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+            <!-- Approve Button -->
+            <form method="post" action="{{ url_for('admin_approve_student', user_id=p.id) }}">
+              <button type="submit" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
+                <i data-feather="check" class="w-4 h-4"></i>
+                Approve
+              </button>
+            </form>
+
+            <!-- Reject Button -->
+            <form method="post" action="{{ url_for('admin_reject_student', user_id=p.id) }}" onsubmit="return confirm('Are you sure you want to reject and remove the registration request for {{ p.username }}?');">
+              <button type="submit" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer">
+                <i data-feather="x" class="w-4 h-4"></i>
+                Reject
+              </button>
+            </form>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="py-12 text-center text-slate-400 flex flex-col items-center justify-center gap-2">
+        <div class="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-500 flex items-center justify-center mb-1">
+          <i data-feather="check-circle" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-base font-semibold text-slate-700 dark:text-slate-200">All Caught Up!</h3>
+        <p class="text-xs text-slate-400 max-w-sm">There are currently no student account requests awaiting approval.</p>
+        <a href="{{ url_for('admin_dashboard') }}" class="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-colors">
+          Return to Dashboard
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
